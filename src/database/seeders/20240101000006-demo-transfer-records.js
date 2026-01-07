@@ -13,6 +13,30 @@ module.exports = {
       return;
     }
 
+    // Discover column names for cylinders, users, and transfer_records
+    const [cylColumns] = await queryInterface.sequelize.query('DESCRIBE cylinders;');
+    const cylColNames = cylColumns.map(c => c.Field || c.column_name);
+    const cylOutletCol = cylColNames.includes('current_outlet_id') ? 'current_outlet_id' : 'currentOutletId';
+
+    const [userColumns] = await queryInterface.sequelize.query('DESCRIBE users;');
+    const userColNames = userColumns.map(c => c.Field || c.column_name);
+    const userOutletCol = userColNames.includes('outlet_id') ? 'outlet_id' : (userColNames.includes('outletId') ? 'outletId' : null);
+
+    const [transferColumns] = await queryInterface.sequelize.query('DESCRIBE transfer_records;');
+    const transferColNames = transferColumns.map(c => c.Field || c.column_name);
+
+    const transferMap = {
+      cylinder_id: transferColNames.includes('cylinder_id') ? 'cylinder_id' : 'cylinderId',
+      from_outlet_id: transferColNames.includes('from_outlet_id') ? 'from_outlet_id' : 'fromOutletId',
+      to_outlet_id: transferColNames.includes('to_outlet_id') ? 'to_outlet_id' : 'toOutletId',
+      transferred_by_id: transferColNames.includes('transferred_by_id') ? 'transferred_by_id' : 'transferredById',
+      transfer_date: transferColNames.includes('transfer_date') ? 'transfer_date' : 'transferDate',
+      reason: 'reason',
+      notes: 'notes',
+      created_at: transferColNames.includes('created_at') ? 'created_at' : 'createdAt',
+      updated_at: transferColNames.includes('updated_at') ? 'updated_at' : 'updatedAt'
+    };
+
     // Get outlets
     const outlets = await queryInterface.sequelize.query(
       `SELECT id FROM outlets WHERE status = 'active' ORDER BY id`,
@@ -26,13 +50,13 @@ module.exports = {
 
     // Get staff members who can perform transfers
     const staff = await queryInterface.sequelize.query(
-      `SELECT id, outlet_id FROM users WHERE role IN ('admin', 'staff') ORDER BY id`,
+      `SELECT id, ${userOutletCol || 'id'} as outlet_id FROM users WHERE role IN ('admin', 'staff') ORDER BY id`,
       { type: queryInterface.sequelize.QueryTypes.SELECT }
     );
 
     // Get some cylinders to transfer
     const cylinders = await queryInterface.sequelize.query(
-      `SELECT id, current_outlet_id FROM cylinders WHERE status = 'available' ORDER BY id LIMIT 10`,
+      `SELECT id, ${cylOutletCol} as current_outlet_id FROM cylinders WHERE status = 'available' ORDER BY id LIMIT 10`,
       { type: queryInterface.sequelize.QueryTypes.SELECT }
     );
 
@@ -61,17 +85,23 @@ module.exports = {
           'Seasonal demand'
         ];
 
-        transferRecords.push({
+        const transferData = {
           cylinder_id: cylinder.id,
           from_outlet_id: currentOutletId,
           to_outlet_id: toOutlet.id,
           transferred_by_id: transferringStaff.id,
           transfer_date: transferDate,
           reason: reasons[Math.floor(Math.random() * reasons.length)],
-          notes: i === 0 ? `Transferred from outlet ${currentOutletId} to outlet ${toOutlet.id}` : null,
-          created_at: transferDate,
-          updated_at: transferDate
+          notes: i === 0 ? `Transferred from outlet ${currentOutletId} to outlet ${toOutlet.id}` : null
+        };
+
+        const mapped = {};
+        Object.keys(transferData).forEach(key => {
+          mapped[transferMap[key]] = transferData[key];
         });
+        mapped[transferMap.created_at] = transferDate;
+        mapped[transferMap.updated_at] = transferDate;
+        transferRecords.push(mapped);
 
         // Update current outlet for next transfer
         currentOutletId = toOutlet.id;
@@ -80,19 +110,24 @@ module.exports = {
       // Update the cylinder's current outlet to match the last transfer
       if (transferRecords.length > 0) {
         const lastTransfer = transferRecords[transferRecords.length - 1];
+        const lastToOutletId = lastTransfer[transferMap.to_outlet_id] || lastTransfer.toOutletId || lastTransfer.to_outlet_id;
         await queryInterface.sequelize.query(
-          `UPDATE cylinders SET current_outlet_id = ${lastTransfer.to_outlet_id} WHERE id = ${cylinder.id}`
+          `UPDATE cylinders SET ${cylOutletCol} = ${lastToOutletId} WHERE id = ${cylinder.id}`
         );
       }
     }
 
-
     if (transferRecords.length > 0) {
       // Sort by date to ensure proper ordering
-      transferRecords.sort((a, b) => a.transfer_date.getTime() - b.transfer_date.getTime());
+      transferRecords.sort((a, b) => {
+        const dateA = a[transferMap.transfer_date] || a.transferDate || a.transfer_date;
+        const dateB = b[transferMap.transfer_date] || b.transferDate || b.transfer_date;
+        return new Date(dateA).getTime() - new Date(dateB).getTime();
+      });
 
       await queryInterface.bulkInsert('transfer_records', transferRecords, {});
     }
+
   },
 
   async down(queryInterface, Sequelize) {

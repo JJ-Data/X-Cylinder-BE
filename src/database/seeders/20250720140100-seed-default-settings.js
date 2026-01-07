@@ -3,9 +3,28 @@
 module.exports = {
   async up(queryInterface, Sequelize) {
     const now = new Date();
-    
+
     // Default pricing settings - simplified structure
-    await queryInterface.bulkInsert('business_settings', [
+    // Discover column names
+    const [columns] = await queryInterface.sequelize.query('DESCRIBE business_settings;');
+    const columnNames = columns.map(c => c.Field || c.column_name);
+
+    const map = {
+      category_id: columnNames.includes('category_id') ? 'category_id' : 'categoryId',
+      setting_key: columnNames.includes('setting_key') ? 'setting_key' : 'settingKey',
+      setting_value: columnNames.includes('setting_value') ? 'setting_value' : 'settingValue',
+      data_type: columnNames.includes('data_type') ? 'data_type' : 'dataType',
+      outlet_id: columnNames.includes('outlet_id') ? 'outlet_id' : 'outletId',
+      cylinder_type: columnNames.includes('cylinder_type') ? 'cylinder_type' : 'cylinderType',
+      operation_type: columnNames.includes('operation_type') ? 'operation_type' : 'operationType',
+      is_active: columnNames.includes('is_active') ? 'is_active' : 'isActive',
+      created_by: columnNames.includes('created_by') ? 'created_by' : 'createdBy',
+      updated_by: columnNames.includes('updated_by') ? 'updated_by' : 'updatedBy',
+      created_at: columnNames.includes('created_at') ? 'created_at' : 'createdAt',
+      updated_at: columnNames.includes('updated_at') ? 'updated_at' : 'updatedAt'
+    };
+
+    const settings = [
       // Lease pricing - per KG system
       {
         category_id: 2,
@@ -17,9 +36,7 @@ module.exports = {
         operation_type: 'LEASE',
         is_active: true,
         created_by: 1,
-        updated_by: 1,
-        created_at: now,
-        updated_at: now,
+        updated_by: 1
       },
       {
         category_id: 2,
@@ -31,11 +48,9 @@ module.exports = {
         operation_type: 'LEASE',
         is_active: true,
         created_by: 1,
-        updated_by: 1,
-        created_at: now,
-        updated_at: now,
+        updated_by: 1
       },
-      
+
       // Return penalty settings - based on cylinder condition
       {
         category_id: 2,
@@ -47,9 +62,7 @@ module.exports = {
         operation_type: 'LEASE',
         is_active: true,
         created_by: 1,
-        updated_by: 1,
-        created_at: now,
-        updated_at: now,
+        updated_by: 1
       },
       {
         category_id: 2,
@@ -61,9 +74,7 @@ module.exports = {
         operation_type: 'LEASE',
         is_active: true,
         created_by: 1,
-        updated_by: 1,
-        created_at: now,
-        updated_at: now,
+        updated_by: 1
       },
       {
         category_id: 2,
@@ -75,11 +86,9 @@ module.exports = {
         operation_type: 'LEASE',
         is_active: true,
         created_by: 1,
-        updated_by: 1,
-        created_at: now,
-        updated_at: now,
+        updated_by: 1
       },
-      
+
       // Refill pricing
       {
         category_id: 3,
@@ -91,9 +100,7 @@ module.exports = {
         operation_type: 'REFILL',
         is_active: true,
         created_by: 1,
-        updated_by: 1,
-        created_at: now,
-        updated_at: now,
+        updated_by: 1
       },
       {
         category_id: 3,
@@ -105,11 +112,9 @@ module.exports = {
         operation_type: 'REFILL',
         is_active: true,
         created_by: 1,
-        updated_by: 1,
-        created_at: now,
-        updated_at: now,
+        updated_by: 1
       },
-      
+
       // Swap pricing - based on cylinder condition
       {
         category_id: 4,
@@ -121,9 +126,7 @@ module.exports = {
         operation_type: 'SWAP',
         is_active: true,
         created_by: 1,
-        updated_by: 1,
-        created_at: now,
-        updated_at: now,
+        updated_by: 1
       },
       {
         category_id: 4,
@@ -135,9 +138,7 @@ module.exports = {
         operation_type: 'SWAP',
         is_active: true,
         created_by: 1,
-        updated_by: 1,
-        created_at: now,
-        updated_at: now,
+        updated_by: 1
       },
       {
         category_id: 4,
@@ -149,11 +150,9 @@ module.exports = {
         operation_type: 'SWAP',
         is_active: true,
         created_by: 1,
-        updated_by: 1,
-        created_at: now,
-        updated_at: now,
+        updated_by: 1
       },
-      
+
       // General settings
       {
         category_id: 10,
@@ -165,9 +164,7 @@ module.exports = {
         operation_type: null,
         is_active: true,
         created_by: 1,
-        updated_by: 1,
-        created_at: now,
-        updated_at: now,
+        updated_by: 1
       },
       {
         category_id: 10,
@@ -179,9 +176,7 @@ module.exports = {
         operation_type: null,
         is_active: true,
         created_by: 1,
-        updated_by: 1,
-        created_at: now,
-        updated_at: now,
+        updated_by: 1
       },
       {
         category_id: 10,
@@ -193,11 +188,9 @@ module.exports = {
         operation_type: null,
         is_active: true,
         created_by: 1,
-        updated_by: 1,
-        created_at: now,
-        updated_at: now,
+        updated_by: 1
       },
-      
+
       // Business rules
       {
         category_id: 8,
@@ -209,9 +202,7 @@ module.exports = {
         operation_type: null,
         is_active: true,
         created_by: 1,
-        updated_by: 1,
-        created_at: now,
-        updated_at: now,
+        updated_by: 1
       },
       {
         category_id: 8,
@@ -223,11 +214,20 @@ module.exports = {
         operation_type: null,
         is_active: true,
         created_by: 1,
-        updated_by: 1,
-        created_at: now,
-        updated_at: now,
+        updated_by: 1
       },
-    ], {});
+    ].map(s => {
+      const mapped = {};
+      Object.keys(s).forEach(key => {
+        mapped[map[key]] = s[key];
+      });
+      mapped[map.created_at] = now;
+      mapped[map.updated_at] = now;
+      return mapped;
+    });
+
+    await queryInterface.bulkInsert('business_settings', settings, {});
+
   },
 
   async down(queryInterface, Sequelize) {
