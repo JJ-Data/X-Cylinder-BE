@@ -42,12 +42,15 @@ module.exports = {
       from_outlet_id: findField(transferColNames, ['from_outlet_id', 'fromOutletId']),
       to_outlet_id: findField(transferColNames, ['to_outlet_id', 'toOutletId']),
       transferred_by_id: findField(transferColNames, ['transferred_by_id', 'transferredById']),
+      initiated_by_id: findField(transferColNames, ['initiated_by_id', 'initiatedById']),
+      accepted_by_id: findField(transferColNames, ['accepted_by_id', 'acceptedById']),
       transfer_date: findField(transferColNames, ['transfer_date', 'transferDate']),
       reason: findField(transferColNames, 'reason'),
       notes: findField(transferColNames, 'notes'),
       created_at: findField(transferColNames, 'created_at'),
       updated_at: findField(transferColNames, 'updated_at')
     };
+
 
 
 
@@ -103,11 +106,14 @@ module.exports = {
           cylinder_id: cylinder.id,
           from_outlet_id: currentOutletId,
           to_outlet_id: toOutlet.id,
-          transferred_by_id: transferringStaff ? transferringStaff.id : null,
+          transferred_by_id: transferringStaff ? transferringStaff.id : 1, // Fallback to 1 if no staff
+          initiated_by_id: transferringStaff ? transferringStaff.id : 1, // Fallback to 1
+          accepted_by_id: transferringStaff ? transferringStaff.id : 1, // Fallback to 1 (auto-accept for demo)
           transfer_date: transferDate,
           reason: reasons[Math.floor(Math.random() * reasons.length)],
           notes: i === 0 ? `Transferred from outlet ${currentOutletId} to outlet ${toOutlet.id}` : null
         };
+
 
         const mapped = {};
         Object.keys(transferData).forEach(key => {
