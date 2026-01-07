@@ -10,6 +10,8 @@ import RefillRecord from './RefillRecord.model';
 import TransferRecord from './TransferRecord.model';
 import SwapRecord from './SwapRecord.model';
 import EmailLog from './EmailLog.model';
+import SettingCategory from './SettingCategory.model';
+import BusinessSetting from './BusinessSetting.model';
 import setupAssociations from './associations';
 
 // Setup model associations
@@ -28,5 +30,8 @@ export {
   TransferRecord,
   SwapRecord,
   EmailLog,
+  SettingCategory,
+  BusinessSetting,
 };
+
 
