@@ -13,29 +13,37 @@ module.exports = {
       return;
     }
 
+    const findField = (cols, target) => {
+      const t = target.toLowerCase().replace(/_/g, '');
+      return cols.find(c => c.toLowerCase().replace(/_/g, '') === t) || target;
+    };
+
     // Discover column names for cylinders, users, and transfer_records
     const [cylColumns] = await queryInterface.sequelize.query('DESCRIBE cylinders;');
     const cylColNames = cylColumns.map(c => c.Field || c.column_name);
-    const cylOutletCol = cylColNames.includes('current_outlet_id') ? 'current_outlet_id' : 'currentOutletId';
+    const cylOutletCol = findField(cylColNames, 'current_outlet_id');
 
-    const [userColumns] = await queryInterface.sequelize.query('DESCRIBE users;');
-    const userColNames = userColumns.map(c => c.Field || c.column_name);
-    const userOutletCol = userColNames.includes('outlet_id') ? 'outlet_id' : (userColNames.includes('outletId') ? 'outletId' : null);
+    const [uColumns] = await queryInterface.sequelize.query('DESCRIBE users;');
+    const userColNames = uColumns.map(c => c.Field || c.column_name);
+    const userOutletCol = findField(userColNames, 'outlet_id');
 
     const [transferColumns] = await queryInterface.sequelize.query('DESCRIBE transfer_records;');
     const transferColNames = transferColumns.map(c => c.Field || c.column_name);
 
+    console.log('Discovered columns:', { cylinders: cylColNames, users: userColNames, transfer_records: transferColNames });
+
     const transferMap = {
-      cylinder_id: transferColNames.includes('cylinder_id') ? 'cylinder_id' : 'cylinderId',
-      from_outlet_id: transferColNames.includes('from_outlet_id') ? 'from_outlet_id' : 'fromOutletId',
-      to_outlet_id: transferColNames.includes('to_outlet_id') ? 'to_outlet_id' : 'toOutletId',
-      transferred_by_id: transferColNames.includes('transferred_by_id') ? 'transferred_by_id' : 'transferredById',
-      transfer_date: transferColNames.includes('transfer_date') ? 'transfer_date' : 'transferDate',
-      reason: 'reason',
-      notes: 'notes',
-      created_at: transferColNames.includes('created_at') ? 'created_at' : 'createdAt',
-      updated_at: transferColNames.includes('updated_at') ? 'updated_at' : 'updatedAt'
+      cylinder_id: findField(transferColNames, 'cylinder_id'),
+      from_outlet_id: findField(transferColNames, 'from_outlet_id'),
+      to_outlet_id: findField(transferColNames, 'to_outlet_id'),
+      transferred_by_id: findField(transferColNames, 'transferred_by_id'),
+      transfer_date: findField(transferColNames, 'transfer_date'),
+      reason: findField(transferColNames, 'reason'),
+      notes: findField(transferColNames, 'notes'),
+      created_at: findField(transferColNames, 'created_at'),
+      updated_at: findField(transferColNames, 'updated_at')
     };
+
 
     // Get outlets
     const outlets = await queryInterface.sequelize.query(

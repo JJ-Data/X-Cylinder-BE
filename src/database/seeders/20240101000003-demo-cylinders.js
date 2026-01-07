@@ -16,21 +16,28 @@ module.exports = {
     // 2. Discover column names
     const [columns] = await queryInterface.sequelize.query('DESCRIBE cylinders;');
     const columnNames = columns.map(c => c.Field || c.column_name);
+    console.log('Discovered columns for cylinders:', columnNames);
+
+    const findField = (cols, target) => {
+      const t = target.toLowerCase().replace(/_/g, '');
+      return cols.find(c => c.toLowerCase().replace(/_/g, '') === t) || target;
+    };
 
     const map = {
-      cylinder_code: columnNames.includes('cylinder_code') ? 'cylinder_code' : 'cylinderCode',
-      type: 'type',
-      status: 'status',
-      current_outlet_id: columnNames.includes('current_outlet_id') ? 'current_outlet_id' : 'currentOutletId',
-      qr_code: columnNames.includes('qr_code') ? 'qr_code' : 'qrCode',
-      manufacture_date: columnNames.includes('manufacture_date') ? 'manufacture_date' : 'manufactureDate',
-      last_inspection_date: columnNames.includes('last_inspection_date') ? 'last_inspection_date' : 'lastInspectionDate',
-      current_gas_volume: columnNames.includes('current_gas_volume') ? 'current_gas_volume' : 'currentGasVolume',
-      max_gas_volume: columnNames.includes('max_gas_volume') ? 'max_gas_volume' : 'maxGasVolume',
-      notes: 'notes',
-      created_at: columnNames.includes('created_at') ? 'created_at' : 'createdAt',
-      updated_at: columnNames.includes('updated_at') ? 'updated_at' : 'updatedAt'
+      cylinder_code: findField(columnNames, 'cylinder_code'),
+      type: findField(columnNames, 'type'),
+      status: findField(columnNames, 'status'),
+      current_outlet_id: findField(columnNames, 'current_outlet_id'),
+      qr_code: findField(columnNames, 'qr_code'),
+      manufacture_date: findField(columnNames, 'manufacture_date'),
+      last_inspection_date: findField(columnNames, 'last_inspection_date'),
+      current_gas_volume: findField(columnNames, 'current_gas_volume'),
+      max_gas_volume: findField(columnNames, 'max_gas_volume'),
+      notes: findField(columnNames, 'notes'),
+      created_at: findField(columnNames, 'created_at'),
+      updated_at: findField(columnNames, 'updated_at')
     };
+
 
     const cylinders = [];
 

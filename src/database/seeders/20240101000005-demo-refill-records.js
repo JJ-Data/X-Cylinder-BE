@@ -13,33 +13,41 @@ module.exports = {
       return;
     }
 
+    const findField = (cols, target) => {
+      const t = target.toLowerCase().replace(/_/g, '');
+      return cols.find(c => c.toLowerCase().replace(/_/g, '') === t) || target;
+    };
+
     // Discover column names for cylinders, users, and refill_records
     const [cylColumns] = await queryInterface.sequelize.query('DESCRIBE cylinders;');
     const cylColNames = cylColumns.map(c => c.Field || c.column_name);
-    const cylOutletCol = cylColNames.includes('current_outlet_id') ? 'current_outlet_id' : 'currentOutletId';
-    const cylMaxCol = cylColNames.includes('max_gas_volume') ? 'max_gas_volume' : 'maxGasVolume';
-    const cylCurCol = cylColNames.includes('current_gas_volume') ? 'current_gas_volume' : 'currentGasVolume';
+    const cylOutletCol = findField(cylColNames, 'current_outlet_id');
+    const cylMaxCol = findField(cylColNames, 'max_gas_volume');
+    const cylCurCol = findField(cylColNames, 'current_gas_volume');
 
-    const [userColumns] = await queryInterface.sequelize.query('DESCRIBE users;');
-    const userColNames = userColumns.map(c => c.Field || c.column_name);
-    const userOutletCol = userColNames.includes('outlet_id') ? 'outlet_id' : (userColNames.includes('outletId') ? 'outletId' : null);
+    const [uColumns] = await queryInterface.sequelize.query('DESCRIBE users;');
+    const userColNames = uColumns.map(c => c.Field || c.column_name);
+    const userOutletCol = findField(userColNames, 'outlet_id');
 
     const [refillColumns] = await queryInterface.sequelize.query('DESCRIBE refill_records;');
     const refillColNames = refillColumns.map(c => c.Field || c.column_name);
 
+    console.log('Discovered columns:', { cylinders: cylColNames, users: userColNames, refill_records: refillColNames });
+
     const refillMap = {
-      cylinder_id: refillColNames.includes('cylinder_id') ? 'cylinder_id' : 'cylinderId',
-      operator_id: refillColNames.includes('operator_id') ? 'operator_id' : 'operatorId',
-      outlet_id: refillColNames.includes('outlet_id') ? 'outlet_id' : 'outletId',
-      refill_date: refillColNames.includes('refill_date') ? 'refill_date' : 'refillDate',
-      pre_refill_volume: refillColNames.includes('pre_refill_volume') ? 'pre_refill_volume' : 'preRefillVolume',
-      post_refill_volume: refillColNames.includes('post_refill_volume') ? 'post_refill_volume' : 'postRefillVolume',
-      refill_cost: refillColNames.includes('refill_cost') ? 'refill_cost' : 'refillCost',
-      batch_number: refillColNames.includes('batch_number') ? 'batch_number' : 'batchNumber',
-      notes: 'notes',
-      created_at: refillColNames.includes('created_at') ? 'created_at' : 'createdAt',
-      updated_at: refillColNames.includes('updated_at') ? 'updated_at' : 'updatedAt'
+      cylinder_id: findField(refillColNames, 'cylinder_id'),
+      operator_id: findField(refillColNames, 'operator_id'),
+      outlet_id: findField(refillColNames, 'outlet_id'),
+      refill_date: findField(refillColNames, 'refill_date'),
+      pre_refill_volume: findField(refillColNames, 'pre_refill_volume'),
+      post_refill_volume: findField(refillColNames, 'post_refill_volume'),
+      refill_cost: findField(refillColNames, 'refill_cost'),
+      batch_number: findField(refillColNames, 'batch_number'),
+      notes: findField(refillColNames, 'notes'),
+      created_at: findField(refillColNames, 'created_at'),
+      updated_at: findField(refillColNames, 'updated_at')
     };
+
 
     // Get refill operators
     const operators = await queryInterface.sequelize.query(

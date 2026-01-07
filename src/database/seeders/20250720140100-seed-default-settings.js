@@ -4,25 +4,32 @@ module.exports = {
   async up(queryInterface, Sequelize) {
     const now = new Date();
 
+    const findField = (cols, target) => {
+      const t = target.toLowerCase().replace(/_/g, '');
+      return cols.find(c => c.toLowerCase().replace(/_/g, '') === t) || target;
+    };
+
     // Default pricing settings - simplified structure
     // Discover column names
     const [columns] = await queryInterface.sequelize.query('DESCRIBE business_settings;');
     const columnNames = columns.map(c => c.Field || c.column_name);
+    console.log('Discovered columns for business_settings:', columnNames);
 
     const map = {
-      category_id: columnNames.includes('category_id') ? 'category_id' : 'categoryId',
-      setting_key: columnNames.includes('setting_key') ? 'setting_key' : 'settingKey',
-      setting_value: columnNames.includes('setting_value') ? 'setting_value' : 'settingValue',
-      data_type: columnNames.includes('data_type') ? 'data_type' : 'dataType',
-      outlet_id: columnNames.includes('outlet_id') ? 'outlet_id' : 'outletId',
-      cylinder_type: columnNames.includes('cylinder_type') ? 'cylinder_type' : 'cylinderType',
-      operation_type: columnNames.includes('operation_type') ? 'operation_type' : 'operationType',
-      is_active: columnNames.includes('is_active') ? 'is_active' : 'isActive',
-      created_by: columnNames.includes('created_by') ? 'created_by' : 'createdBy',
-      updated_by: columnNames.includes('updated_by') ? 'updated_by' : 'updatedBy',
-      created_at: columnNames.includes('created_at') ? 'created_at' : 'createdAt',
-      updated_at: columnNames.includes('updated_at') ? 'updated_at' : 'updatedAt'
+      category_id: findField(columnNames, 'category_id'),
+      setting_key: findField(columnNames, 'setting_key'),
+      setting_value: findField(columnNames, 'setting_value'),
+      data_type: findField(columnNames, 'data_type'),
+      outlet_id: findField(columnNames, 'outlet_id'),
+      cylinder_type: findField(columnNames, 'cylinder_type'),
+      operation_type: findField(columnNames, 'operation_type'),
+      is_active: findField(columnNames, 'is_active'),
+      created_by: findField(columnNames, 'created_by'),
+      updated_by: findField(columnNames, 'updated_by'),
+      created_at: findField(columnNames, 'created_at'),
+      updated_at: findField(columnNames, 'updated_at')
     };
+
 
     const settings = [
       // Lease pricing - per KG system

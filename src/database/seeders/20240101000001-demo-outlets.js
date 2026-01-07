@@ -13,20 +13,27 @@ module.exports = {
       return;
     }
 
-    // 2. Discover column names (handle contact_phone vs contactPhone mismatch)
+    // 2. Discover column names
     const [columns] = await queryInterface.sequelize.query('DESCRIBE outlets;');
     const columnNames = columns.map(c => c.Field || c.column_name);
+    console.log('Discovered columns for outlets:', columnNames);
+
+    const findField = (cols, target) => {
+      const t = target.toLowerCase().replace(/_/g, '');
+      return cols.find(c => c.toLowerCase().replace(/_/g, '') === t) || target;
+    };
 
     const map = {
-      name: 'name',
-      location: 'location',
-      contact_phone: columnNames.includes('contact_phone') ? 'contact_phone' : 'contactPhone',
-      contact_email: columnNames.includes('contact_email') ? 'contact_email' : 'contactEmail',
-      status: 'status',
-      manager_id: columnNames.includes('manager_id') ? 'manager_id' : 'managerId',
-      created_at: columnNames.includes('created_at') ? 'created_at' : 'createdAt',
-      updated_at: columnNames.includes('updated_at') ? 'updated_at' : 'updatedAt'
+      name: findField(columnNames, 'name'),
+      location: findField(columnNames, 'location'),
+      contact_phone: findField(columnNames, 'contact_phone'),
+      contact_email: findField(columnNames, 'contact_email'),
+      status: findField(columnNames, 'status'),
+      manager_id: findField(columnNames, 'manager_id'),
+      created_at: findField(columnNames, 'created_at'),
+      updated_at: findField(columnNames, 'updated_at')
     };
+
 
     const outlets = [
       {

@@ -13,30 +13,41 @@ module.exports = {
       return;
     }
 
-    // Discover column names for cylinders and lease_records
+    const findField = (cols, target) => {
+      const t = target.toLowerCase().replace(/_/g, '');
+      return cols.find(c => c.toLowerCase().replace(/_/g, '') === t) || target;
+    };
+
+    // Discover column names for cylinders, lease_records, and users
     const [cylColumns] = await queryInterface.sequelize.query('DESCRIBE cylinders;');
     const cylColNames = cylColumns.map(c => c.Field || c.column_name);
-    const cylOutletCol = cylColNames.includes('current_outlet_id') ? 'current_outlet_id' : 'currentOutletId';
+    const cylOutletCol = findField(cylColNames, 'current_outlet_id');
 
     const [leaseColumns] = await queryInterface.sequelize.query('DESCRIBE lease_records;');
     const leaseColNames = leaseColumns.map(c => c.Field || c.column_name);
 
+    const [uColumns] = await queryInterface.sequelize.query('DESCRIBE users;');
+    const userColNames = uColumns.map(c => c.Field || c.column_name);
+    const userOutletCol = findField(userColNames, 'outlet_id');
+
+    console.log('Discovered columns:', { cylinders: cylColNames, lease_records: leaseColNames, users: userColNames });
+
     const leaseMap = {
-      cylinder_id: leaseColNames.includes('cylinder_id') ? 'cylinder_id' : 'cylinderId',
-      customer_id: leaseColNames.includes('customer_id') ? 'customer_id' : 'customerId',
-      outlet_id: leaseColNames.includes('outlet_id') ? 'outlet_id' : 'outletId',
-      staff_id: leaseColNames.includes('staff_id') ? 'staff_id' : 'staffId',
-      lease_date: leaseColNames.includes('lease_date') ? 'lease_date' : 'leaseDate',
-      expected_return_date: leaseColNames.includes('expected_return_date') ? 'expected_return_date' : 'expectedReturnDate',
-      actual_return_date: leaseColNames.includes('actual_return_date') ? 'actual_return_date' : 'actualReturnDate',
-      return_staff_id: leaseColNames.includes('return_staff_id') ? 'return_staff_id' : 'returnStaffId',
-      lease_status: leaseColNames.includes('lease_status') ? 'lease_status' : 'leaseStatus',
-      deposit_amount: leaseColNames.includes('deposit_amount') ? 'deposit_amount' : 'depositAmount',
-      lease_amount: leaseColNames.includes('lease_amount') ? 'lease_amount' : 'leaseAmount',
-      refund_amount: leaseColNames.includes('refund_amount') ? 'refund_amount' : 'refundAmount',
-      notes: 'notes',
-      created_at: leaseColNames.includes('created_at') ? 'created_at' : 'createdAt',
-      updated_at: leaseColNames.includes('updated_at') ? 'updated_at' : 'updatedAt'
+      cylinder_id: findField(leaseColNames, 'cylinder_id'),
+      customer_id: findField(leaseColNames, 'customer_id'),
+      outlet_id: findField(leaseColNames, 'outlet_id'),
+      staff_id: findField(leaseColNames, 'staff_id'),
+      lease_date: findField(leaseColNames, 'lease_date'),
+      expected_return_date: findField(leaseColNames, 'expected_return_date'),
+      actual_return_date: findField(leaseColNames, 'actual_return_date'),
+      return_staff_id: findField(leaseColNames, 'return_staff_id'),
+      lease_status: findField(leaseColNames, 'lease_status'),
+      deposit_amount: findField(leaseColNames, 'deposit_amount'),
+      lease_amount: findField(leaseColNames, 'lease_amount'),
+      refund_amount: findField(leaseColNames, 'refund_amount'),
+      notes: findField(leaseColNames, 'notes'),
+      created_at: findField(leaseColNames, 'created_at'),
+      updated_at: findField(leaseColNames, 'updated_at')
     };
 
     // Get some cylinders that are marked as 'leased'
@@ -53,14 +64,10 @@ module.exports = {
 
     // Get staff IDs
     const staff = await queryInterface.sequelize.query(
-      `SELECT id, ${cylColNames.includes('outlet_id') ? 'outlet_id' : (cylColNames.includes('outletId') ? 'outletId' : 'id')} as outlet_id FROM users WHERE role = 'staff' ORDER BY id`,
+      `SELECT id, ${userOutletCol} as outlet_id FROM users WHERE role = 'staff' ORDER BY id`,
       { type: queryInterface.sequelize.QueryTypes.SELECT }
     );
-    // Note: for users table, I need to check if it has outlet_id or outletId. 
-    // Actually, I'll just check if the users table has outlet columns.
-    const [userColumns] = await queryInterface.sequelize.query('DESCRIBE users;');
-    const userColNames = userColumns.map(c => c.Field || c.column_name);
-    const userOutletCol = userColNames.includes('outlet_id') ? 'outlet_id' : (userColNames.includes('outletId') ? 'outletId' : null);
+
 
     const leaseRecords = [];
     const now = new Date();

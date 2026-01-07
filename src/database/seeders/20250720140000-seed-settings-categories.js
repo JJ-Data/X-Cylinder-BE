@@ -4,20 +4,27 @@ module.exports = {
   async up(queryInterface, Sequelize) {
     const now = new Date();
 
+    const findField = (cols, target) => {
+      const t = target.toLowerCase().replace(/_/g, '');
+      return cols.find(c => c.toLowerCase().replace(/_/g, '') === t) || target;
+    };
+
     // Discover column names
     const [columns] = await queryInterface.sequelize.query('DESCRIBE setting_categories;');
     const columnNames = columns.map(c => c.Field || c.column_name);
+    console.log('Discovered columns for setting_categories:', columnNames);
 
     const map = {
-      id: 'id',
-      name: 'name',
-      description: 'description',
-      icon: 'icon',
-      is_active: columnNames.includes('is_active') ? 'is_active' : 'isActive',
-      display_order: columnNames.includes('display_order') ? 'display_order' : 'displayOrder',
-      created_at: columnNames.includes('created_at') ? 'created_at' : 'createdAt',
-      updated_at: columnNames.includes('updated_at') ? 'updated_at' : 'updatedAt'
+      id: findField(columnNames, 'id'),
+      name: findField(columnNames, 'name'),
+      description: findField(columnNames, 'description'),
+      icon: findField(columnNames, 'icon'),
+      is_active: findField(columnNames, 'is_active'),
+      display_order: findField(columnNames, 'display_order'),
+      created_at: findField(columnNames, 'created_at'),
+      updated_at: findField(columnNames, 'updated_at')
     };
+
 
     const categories = [
       {

@@ -19,22 +19,29 @@ module.exports = {
     // 2. Discover column names for users and outlets
     const [userColumns] = await queryInterface.sequelize.query('DESCRIBE users;');
     const userColNames = userColumns.map(c => c.Field || c.column_name);
+    console.log('Discovered columns for users:', userColNames);
+
+    const findField = (cols, target) => {
+      const t = target.toLowerCase().replace(/_/g, '');
+      return cols.find(c => c.toLowerCase().replace(/_/g, '') === t) || target;
+    };
 
     const userMap = {
-      email: 'email',
-      password: 'password',
-      first_name: userColNames.includes('first_name') ? 'first_name' : 'firstName',
-      last_name: userColNames.includes('last_name') ? 'last_name' : 'lastName',
-      role: 'role',
-      is_active: userColNames.includes('is_active') ? 'is_active' : 'isActive',
-      email_verified: userColNames.includes('email_verified') ? 'email_verified' : 'emailVerified',
-      email_verified_at: userColNames.includes('email_verified_at') ? 'email_verified_at' : 'emailVerifiedAt',
-      outlet_id: userColNames.includes('outlet_id') ? 'outlet_id' : (userColNames.includes('outletId') ? 'outletId' : null),
-      payment_status: userColNames.includes('payment_status') ? 'payment_status' : 'paymentStatus',
-      activated_at: userColNames.includes('activated_at') ? 'activated_at' : 'activatedAt',
-      created_at: userColNames.includes('created_at') ? 'created_at' : 'createdAt',
-      updated_at: userColNames.includes('updated_at') ? 'updated_at' : 'updatedAt'
+      email: findField(userColNames, 'email'),
+      password: findField(userColNames, 'password'),
+      first_name: findField(userColNames, 'first_name'),
+      last_name: findField(userColNames, 'last_name'),
+      role: findField(userColNames, 'role'),
+      is_active: findField(userColNames, 'is_active'),
+      email_verified: findField(userColNames, 'email_verified'),
+      email_verified_at: findField(userColNames, 'email_verified_at'),
+      outlet_id: findField(userColNames, 'outlet_id'),
+      payment_status: findField(userColNames, 'payment_status'),
+      activated_at: findField(userColNames, 'activated_at'),
+      created_at: findField(userColNames, 'created_at'),
+      updated_at: findField(userColNames, 'updated_at')
     };
+
 
     const users = [
       {
