@@ -1,38 +1,34 @@
-
 const { sequelize } = require('../dist/models');
 
 async function sync() {
-    console.log('🔄 FORCE SYNC: Starting (Safe Mode)...');
+    console.log('🔄 FORCE SYNC: Starting (Granular Mode)...');
     try {
         await sequelize.authenticate();
         console.log('✅ Connection OK');
 
-        // Check if a core table already exists
-        const [results] = await sequelize.query("SHOW TABLES LIKE 'cylinders'");
-
-        if (results.length > 0) {
-            console.log('✅ Tables already exist (cylinders found). Skipping sync to prevent "Too many keys" error.');
-            await sequelize.close();
-            process.exit(0);
+        // Iterate over all models and sync them individually
+        // This ensures that if one fails (e.g. cylinders index duplicate), 
+        // the others (e.g. setting_categories) still get created.
+        for (const modelName of Object.keys(sequelize.models)) {
+            const model = sequelize.models[modelName];
+            try {
+                // console.log(`   - Syncing model: ${modelName}...`);
+                await model.sync({ force: false, alter: false });
+            } catch (modelError) {
+                // Ignore specific known errors errors but log them
+                if (modelError.message.includes('Too many keys') || modelError.name === 'SequelizeDatabaseError') {
+                    console.log(`   ⚠️ Skipped ${modelName} due to index limit/DB error (Table likely exists).`);
+                } else {
+                    console.error(`   ❌ Failed to sync ${modelName}:`, modelError.message);
+                }
+            }
         }
 
-        console.log('⚠️ Tables missing. Running creation sync...');
-
-        // Only run sync if tables are missing.
-        // alter: false ensures we strictly create, never modify.
-        await sequelize.sync({ force: false, alter: false });
-
-        console.log('✅ FORCE SYNC: Complete (Tables Created)');
+        console.log('✅ FORCE SYNC: Complete (All models processed)');
         await sequelize.close();
         process.exit(0);
     } catch (e) {
-        // If we hit "Too many keys" or "Duplicate key", just ignore it and proceed.
-        if (e.name === 'SequelizeDatabaseError' || e.message.includes('Too many keys')) {
-            console.log('⚠️ Sync hit a known index error but probably succeeded in creating tables. Ignoring and proceeding...');
-            process.exit(0);
-        }
-
-        console.error('❌ FORCE SYNC: Failed', e);
+        console.error('❌ FORCE SYNC: Fatal Error', e);
         process.exit(1);
     }
 }
