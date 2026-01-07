@@ -4,8 +4,18 @@ const bcrypt = require('bcrypt');
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
+    // Check if data already exists
+    const [existingUsers] = await queryInterface.sequelize.query(
+      'SELECT id FROM users LIMIT 1;'
+    );
+
+    if (existingUsers.length > 0) {
+      console.log('Users table already has data. Skipping demo seeding...');
+      return;
+    }
+
     const hashedPassword = await bcrypt.hash('Test@123', 10);
-    
+
     await queryInterface.bulkInsert('users', [
       {
         email: 'admin@cylinderx.com',
@@ -121,7 +131,7 @@ module.exports = {
         is_active: true,
         email_verified: true,
         email_verified_at: new Date(),
-        outlet_id: null, // Customers don't belong to outlets
+        outlet_id: null,
         payment_status: 'active',
         activated_at: new Date(),
         created_at: new Date(),
@@ -136,7 +146,7 @@ module.exports = {
         is_active: true,
         email_verified: true,
         email_verified_at: new Date(),
-        outlet_id: null, // Customers don't belong to outlets
+        outlet_id: null,
         payment_status: 'active',
         activated_at: new Date(),
         created_at: new Date(),
@@ -151,13 +161,14 @@ module.exports = {
         is_active: true,
         email_verified: false,
         email_verified_at: null,
-        outlet_id: null, // Customers don't belong to outlets
+        outlet_id: null,
         payment_status: 'pending',
         activated_at: null,
         created_at: new Date(),
         updated_at: new Date()
       }
     ], {});
+
 
     // Update outlets with manager IDs
     await queryInterface.sequelize.query(
@@ -173,7 +184,7 @@ module.exports = {
     await queryInterface.sequelize.query(
       `UPDATE outlets SET manager_id = NULL`
     );
-    
+
     await queryInterface.bulkDelete('users', null, {});
   }
 };

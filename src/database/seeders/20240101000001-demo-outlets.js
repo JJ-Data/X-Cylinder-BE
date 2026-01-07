@@ -3,6 +3,16 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
+    // Check if data already exists
+    const [existingOutlets] = await queryInterface.sequelize.query(
+      'SELECT id FROM outlets LIMIT 1;'
+    );
+
+    if (existingOutlets.length > 0) {
+      console.log('Outlets table already has data. Skipping demo seeding...');
+      return;
+    }
+
     await queryInterface.bulkInsert('outlets', [
       {
         name: 'Main Outlet',
@@ -10,7 +20,7 @@ module.exports = {
         contact_phone: '+1234567890',
         contact_email: 'main@cylinderx.com',
         status: 'active',
-        manager_id: null, // Will be updated after users are seeded
+        manager_id: null,
         created_at: new Date(),
         updated_at: new Date()
       },
@@ -20,7 +30,7 @@ module.exports = {
         contact_phone: '+1234567891',
         contact_email: 'north@cylinderx.com',
         status: 'active',
-        manager_id: null, // Will be updated after users are seeded
+        manager_id: null,
         created_at: new Date(),
         updated_at: new Date()
       },
@@ -30,7 +40,7 @@ module.exports = {
         contact_phone: '+1234567892',
         contact_email: 'south@cylinderx.com',
         status: 'active',
-        manager_id: null, // Will be updated after users are seeded
+        manager_id: null,
         created_at: new Date(),
         updated_at: new Date()
       },
@@ -40,11 +50,12 @@ module.exports = {
         contact_phone: '+1234567893',
         contact_email: 'east@cylinderx.com',
         status: 'inactive',
-        manager_id: null, // Will be updated after users are seeded
+        manager_id: null,
         created_at: new Date(),
         updated_at: new Date()
       }
     ], {});
+
   },
 
   async down(queryInterface, Sequelize) {
