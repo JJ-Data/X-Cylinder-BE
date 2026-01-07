@@ -5,8 +5,10 @@ const sequelizeConfig = {
   host: config.database.host,
   port: config.database.port,
   dialect: 'mysql' as const,
-  logging: config.isDevelopment ? console.log : false,
+  // Force logging to debug connection issues in production
+  logging: console.log,
   pool: {
+
     max: 5,
     min: 0,
     acquire: 30000,

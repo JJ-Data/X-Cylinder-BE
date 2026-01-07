@@ -8,18 +8,23 @@ import { ScheduledTaskService } from '@services/scheduledTask.service';
 const startServer = async (): Promise<void> => {
   try {
     // Connect to database
+    logger.info('Attempting to connect to database...');
     await connectDatabase();
+    logger.info('Database connection established.');
 
     // Initialize scheduled tasks
+    logger.info('Initializing scheduled tasks...');
     ScheduledTaskService.initialize();
 
     // Create Express app
     const app = createApp();
 
     // Start server
+    logger.info(`Starting server on port ${config.port}...`);
     const server = app.listen(config.port, () => {
       logger.info(`Server is running on port ${config.port} in ${config.env} mode`);
     });
+
 
     // Graceful shutdown
     const gracefulShutdown = async (signal: string): Promise<void> => {
