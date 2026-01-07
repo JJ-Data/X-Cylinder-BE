@@ -4,6 +4,17 @@ module.exports = {
   async up(queryInterface, Sequelize) {
     const now = new Date();
 
+    // Check if data already exists
+    const [existingSettings] = await queryInterface.sequelize.query(
+      'SELECT id FROM business_settings LIMIT 1;'
+    );
+
+    if (existingSettings.length > 0) {
+      console.log('Business settings already exist. Skipping demo seeding...');
+      return;
+    }
+
+
     const findField = (cols, targets) => {
       if (!Array.isArray(targets)) targets = [targets];
       for (const target of targets) {
