@@ -21,26 +21,32 @@ module.exports = {
     const userColNames = userColumns.map(c => c.Field || c.column_name);
     console.log('Discovered columns for users:', userColNames);
 
-    const findField = (cols, target) => {
-      const t = target.toLowerCase().replace(/_/g, '');
-      return cols.find(c => c.toLowerCase().replace(/_/g, '') === t) || target;
+    const findField = (cols, targets) => {
+      if (!Array.isArray(targets)) targets = [targets];
+      for (const target of targets) {
+        const t = target.toLowerCase().replace(/_/g, '');
+        const found = cols.find(c => c.toLowerCase().replace(/_/g, '') === t);
+        if (found) return found;
+      }
+      return null;
     };
 
     const userMap = {
       email: findField(userColNames, 'email'),
       password: findField(userColNames, 'password'),
-      first_name: findField(userColNames, 'first_name'),
-      last_name: findField(userColNames, 'last_name'),
+      first_name: findField(userColNames, ['first_name', 'firstName']),
+      last_name: findField(userColNames, ['last_name', 'lastName']),
       role: findField(userColNames, 'role'),
-      is_active: findField(userColNames, 'is_active'),
-      email_verified: findField(userColNames, 'email_verified'),
-      email_verified_at: findField(userColNames, 'email_verified_at'),
-      outlet_id: findField(userColNames, 'outlet_id'),
-      payment_status: findField(userColNames, 'payment_status'),
-      activated_at: findField(userColNames, 'activated_at'),
+      is_active: findField(userColNames, ['is_active', 'isActive']),
+      email_verified: findField(userColNames, ['email_verified', 'emailVerified']),
+      email_verified_at: findField(userColNames, ['email_verified_at', 'emailVerifiedAt']),
+      outlet_id: findField(userColNames, ['outlet_id', 'outletId']),
+      payment_status: findField(userColNames, ['payment_status', 'paymentStatus']),
+      activated_at: findField(userColNames, ['activated_at', 'activatedAt']),
       created_at: findField(userColNames, 'created_at'),
       updated_at: findField(userColNames, 'updated_at')
     };
+
 
 
     const users = [
@@ -181,8 +187,8 @@ module.exports = {
           mapped[userMap[key]] = u[key];
         }
       });
-      mapped[userMap.created_at] = new Date();
-      mapped[userMap.updated_at] = new Date();
+      if (userMap.created_at) mapped[userMap.created_at] = new Date();
+      if (userMap.updated_at) mapped[userMap.updated_at] = new Date();
       return mapped;
     });
 
@@ -191,15 +197,18 @@ module.exports = {
     // Discover column names for outlets
     const [outletColumns] = await queryInterface.sequelize.query('DESCRIBE outlets;');
     const outletColNames = outletColumns.map(c => c.Field || c.column_name);
-    const managerCol = outletColNames.includes('manager_id') ? 'manager_id' : 'managerId';
+    const managerCol = findField(outletColNames, ['manager_id', 'user_id']);
 
     // Update outlets with manager IDs
-    await queryInterface.sequelize.query(
-      `UPDATE outlets SET ${managerCol} = 2 WHERE id = 1`
-    );
-    await queryInterface.sequelize.query(
-      `UPDATE outlets SET ${managerCol} = 3 WHERE id = 2`
-    );
+    if (managerCol) {
+      await queryInterface.sequelize.query(
+        `UPDATE outlets SET ${managerCol} = 2 WHERE id = 1`
+      );
+      await queryInterface.sequelize.query(
+        `UPDATE outlets SET ${managerCol} = 3 WHERE id = 2`
+      );
+    }
+
 
   },
 

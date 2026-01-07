@@ -4,9 +4,14 @@ module.exports = {
   async up(queryInterface, Sequelize) {
     const now = new Date();
 
-    const findField = (cols, target) => {
-      const t = target.toLowerCase().replace(/_/g, '');
-      return cols.find(c => c.toLowerCase().replace(/_/g, '') === t) || target;
+    const findField = (cols, targets) => {
+      if (!Array.isArray(targets)) targets = [targets];
+      for (const target of targets) {
+        const t = target.toLowerCase().replace(/_/g, '');
+        const found = cols.find(c => c.toLowerCase().replace(/_/g, '') === t);
+        if (found) return found;
+      }
+      return null;
     };
 
     // Discover column names
@@ -19,11 +24,12 @@ module.exports = {
       name: findField(columnNames, 'name'),
       description: findField(columnNames, 'description'),
       icon: findField(columnNames, 'icon'),
-      is_active: findField(columnNames, 'is_active'),
-      display_order: findField(columnNames, 'display_order'),
+      is_active: findField(columnNames, ['is_active', 'isActive']),
+      display_order: findField(columnNames, ['display_order', 'displayOrder']),
       created_at: findField(columnNames, 'created_at'),
       updated_at: findField(columnNames, 'updated_at')
     };
+
 
 
     const categories = [
@@ -110,12 +116,15 @@ module.exports = {
     ].map(c => {
       const mapped = {};
       Object.keys(c).forEach(key => {
-        mapped[map[key]] = c[key];
+        if (map[key]) {
+          mapped[map[key]] = c[key];
+        }
       });
-      mapped[map.created_at] = now;
-      mapped[map.updated_at] = now;
+      if (map.created_at) mapped[map.created_at] = now;
+      if (map.updated_at) mapped[map.updated_at] = now;
       return mapped;
     });
+
 
     await queryInterface.bulkInsert('setting_categories', categories, {});
 

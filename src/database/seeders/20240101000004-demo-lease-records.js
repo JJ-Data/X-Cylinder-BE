@@ -13,48 +13,55 @@ module.exports = {
       return;
     }
 
-    const findField = (cols, target) => {
-      const t = target.toLowerCase().replace(/_/g, '');
-      return cols.find(c => c.toLowerCase().replace(/_/g, '') === t) || target;
+    const findField = (cols, targets) => {
+      if (!Array.isArray(targets)) targets = [targets];
+      for (const target of targets) {
+        const t = target.toLowerCase().replace(/_/g, '');
+        const found = cols.find(c => c.toLowerCase().replace(/_/g, '') === t);
+        if (found) return found;
+      }
+      return null;
     };
 
     // Discover column names for cylinders, lease_records, and users
     const [cylColumns] = await queryInterface.sequelize.query('DESCRIBE cylinders;');
     const cylColNames = cylColumns.map(c => c.Field || c.column_name);
-    const cylOutletCol = findField(cylColNames, 'current_outlet_id');
+    const cylOutletCol = findField(cylColNames, ['current_outlet_id', 'outlet_id']);
 
     const [leaseColumns] = await queryInterface.sequelize.query('DESCRIBE lease_records;');
     const leaseColNames = leaseColumns.map(c => c.Field || c.column_name);
 
     const [uColumns] = await queryInterface.sequelize.query('DESCRIBE users;');
     const userColNames = uColumns.map(c => c.Field || c.column_name);
-    const userOutletCol = findField(userColNames, 'outlet_id');
+    const userOutletCol = findField(userColNames, ['outlet_id', 'outletId']);
 
     console.log('Discovered columns:', { cylinders: cylColNames, lease_records: leaseColNames, users: userColNames });
 
     const leaseMap = {
-      cylinder_id: findField(leaseColNames, 'cylinder_id'),
-      customer_id: findField(leaseColNames, 'customer_id'),
-      outlet_id: findField(leaseColNames, 'outlet_id'),
-      staff_id: findField(leaseColNames, 'staff_id'),
-      lease_date: findField(leaseColNames, 'lease_date'),
-      expected_return_date: findField(leaseColNames, 'expected_return_date'),
-      actual_return_date: findField(leaseColNames, 'actual_return_date'),
-      return_staff_id: findField(leaseColNames, 'return_staff_id'),
-      lease_status: findField(leaseColNames, 'lease_status'),
-      deposit_amount: findField(leaseColNames, 'deposit_amount'),
-      lease_amount: findField(leaseColNames, 'lease_amount'),
-      refund_amount: findField(leaseColNames, 'refund_amount'),
+      cylinder_id: findField(leaseColNames, ['cylinder_id', 'cylinderId']),
+      customer_id: findField(leaseColNames, ['customer_id', 'customerId']),
+      outlet_id: findField(leaseColNames, ['outlet_id', 'outletId']),
+      staff_id: findField(leaseColNames, ['staff_id', 'staffId']),
+      lease_date: findField(leaseColNames, ['lease_date', 'leaseDate']),
+      expected_return_date: findField(leaseColNames, ['expected_return_date', 'expectedReturnDate']),
+      actual_return_date: findField(leaseColNames, ['actual_return_date', 'actualReturnDate', 'return_date']),
+      return_staff_id: findField(leaseColNames, ['return_staff_id', 'returnStaffId']),
+      lease_status: findField(leaseColNames, ['lease_status', 'leaseStatus', 'status']),
+      deposit_amount: findField(leaseColNames, ['deposit_amount', 'depositAmount']),
+      lease_amount: findField(leaseColNames, ['lease_amount', 'leaseAmount']),
+      refund_amount: findField(leaseColNames, ['refund_amount', 'refundAmount']),
       notes: findField(leaseColNames, 'notes'),
       created_at: findField(leaseColNames, 'created_at'),
       updated_at: findField(leaseColNames, 'updated_at')
     };
 
+
     // Get some cylinders that are marked as 'leased'
     const leasedCylinders = await queryInterface.sequelize.query(
-      `SELECT id, ${cylOutletCol} as current_outlet_id FROM cylinders WHERE status = 'leased' LIMIT 20`,
+      `SELECT id${cylOutletCol ? `, ${cylOutletCol} as current_outlet_id` : ''} FROM cylinders WHERE status = 'leased' LIMIT 20`,
       { type: queryInterface.sequelize.QueryTypes.SELECT }
     );
+
 
     // Get customer IDs
     const customers = await queryInterface.sequelize.query(
@@ -96,16 +103,18 @@ module.exports = {
 
       const mapped = {};
       Object.keys(leaseData).forEach(key => {
-        mapped[leaseMap[key]] = leaseData[key];
+        if (leaseMap[key]) {
+          mapped[leaseMap[key]] = leaseData[key];
+        }
       });
-      mapped[leaseMap.created_at] = leaseDate;
-      mapped[leaseMap.updated_at] = new Date();
+      if (leaseMap.created_at) mapped[leaseMap.created_at] = leaseDate;
+      if (leaseMap.updated_at) mapped[leaseMap.updated_at] = new Date();
       leaseRecords.push(mapped);
     });
 
     // Create some returned lease records
     const availableCylinders = await queryInterface.sequelize.query(
-      `SELECT id, ${cylOutletCol} as current_outlet_id FROM cylinders WHERE status = 'available' LIMIT 10`,
+      `SELECT id${cylOutletCol ? `, ${cylOutletCol} as current_outlet_id` : ''} FROM cylinders WHERE status = 'available' LIMIT 10`,
       { type: queryInterface.sequelize.QueryTypes.SELECT }
     );
 
@@ -133,10 +142,12 @@ module.exports = {
 
       const mapped = {};
       Object.keys(leaseData).forEach(key => {
-        mapped[leaseMap[key]] = leaseData[key];
+        if (leaseMap[key]) {
+          mapped[leaseMap[key]] = leaseData[key];
+        }
       });
-      mapped[leaseMap.created_at] = leaseDate;
-      mapped[leaseMap.updated_at] = returnDate;
+      if (leaseMap.created_at) mapped[leaseMap.created_at] = leaseDate;
+      if (leaseMap.updated_at) mapped[leaseMap.updated_at] = returnDate;
       leaseRecords.push(mapped);
     });
 

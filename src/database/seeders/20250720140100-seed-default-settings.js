@@ -4,9 +4,14 @@ module.exports = {
   async up(queryInterface, Sequelize) {
     const now = new Date();
 
-    const findField = (cols, target) => {
-      const t = target.toLowerCase().replace(/_/g, '');
-      return cols.find(c => c.toLowerCase().replace(/_/g, '') === t) || target;
+    const findField = (cols, targets) => {
+      if (!Array.isArray(targets)) targets = [targets];
+      for (const target of targets) {
+        const t = target.toLowerCase().replace(/_/g, '');
+        const found = cols.find(c => c.toLowerCase().replace(/_/g, '') === t);
+        if (found) return found;
+      }
+      return null;
     };
 
     // Default pricing settings - simplified structure
@@ -16,19 +21,20 @@ module.exports = {
     console.log('Discovered columns for business_settings:', columnNames);
 
     const map = {
-      category_id: findField(columnNames, 'category_id'),
-      setting_key: findField(columnNames, 'setting_key'),
-      setting_value: findField(columnNames, 'setting_value'),
-      data_type: findField(columnNames, 'data_type'),
-      outlet_id: findField(columnNames, 'outlet_id'),
-      cylinder_type: findField(columnNames, 'cylinder_type'),
-      operation_type: findField(columnNames, 'operation_type'),
-      is_active: findField(columnNames, 'is_active'),
-      created_by: findField(columnNames, 'created_by'),
-      updated_by: findField(columnNames, 'updated_by'),
+      category_id: findField(columnNames, ['category_id', 'categoryId']),
+      setting_key: findField(columnNames, ['setting_key', 'settingKey']),
+      setting_value: findField(columnNames, ['setting_value', 'settingValue']),
+      data_type: findField(columnNames, ['data_type', 'dataType']),
+      outlet_id: findField(columnNames, ['outlet_id', 'outletId']),
+      cylinder_type: findField(columnNames, ['cylinder_type', 'cylinderType']),
+      operation_type: findField(columnNames, ['operation_type', 'operationType']),
+      is_active: findField(columnNames, ['is_active', 'isActive']),
+      created_by: findField(columnNames, ['created_by', 'createdBy']),
+      updated_by: findField(columnNames, ['updated_by', 'updatedBy']),
       created_at: findField(columnNames, 'created_at'),
       updated_at: findField(columnNames, 'updated_at')
     };
+
 
 
     const settings = [
@@ -226,12 +232,15 @@ module.exports = {
     ].map(s => {
       const mapped = {};
       Object.keys(s).forEach(key => {
-        mapped[map[key]] = s[key];
+        if (map[key]) {
+          mapped[map[key]] = s[key];
+        }
       });
-      mapped[map.created_at] = now;
-      mapped[map.updated_at] = now;
+      if (map.created_at) mapped[map.created_at] = now;
+      if (map.updated_at) mapped[map.updated_at] = now;
       return mapped;
     });
+
 
     await queryInterface.bulkInsert('business_settings', settings, {});
 

@@ -18,25 +18,31 @@ module.exports = {
     const columnNames = columns.map(c => c.Field || c.column_name);
     console.log('Discovered columns for cylinders:', columnNames);
 
-    const findField = (cols, target) => {
-      const t = target.toLowerCase().replace(/_/g, '');
-      return cols.find(c => c.toLowerCase().replace(/_/g, '') === t) || target;
+    const findField = (cols, targets) => {
+      if (!Array.isArray(targets)) targets = [targets];
+      for (const target of targets) {
+        const t = target.toLowerCase().replace(/_/g, '');
+        const found = cols.find(c => c.toLowerCase().replace(/_/g, '') === t);
+        if (found) return found;
+      }
+      return null;
     };
 
     const map = {
-      cylinder_code: findField(columnNames, 'cylinder_code'),
+      cylinder_code: findField(columnNames, ['cylinder_code', 'code']),
       type: findField(columnNames, 'type'),
       status: findField(columnNames, 'status'),
-      current_outlet_id: findField(columnNames, 'current_outlet_id'),
-      qr_code: findField(columnNames, 'qr_code'),
-      manufacture_date: findField(columnNames, 'manufacture_date'),
-      last_inspection_date: findField(columnNames, 'last_inspection_date'),
-      current_gas_volume: findField(columnNames, 'current_gas_volume'),
-      max_gas_volume: findField(columnNames, 'max_gas_volume'),
+      current_outlet_id: findField(columnNames, ['current_outlet_id', 'outlet_id']),
+      qr_code: findField(columnNames, ['qr_code', 'qrCode']),
+      manufacture_date: findField(columnNames, ['manufacture_date', 'manufactureDate']),
+      last_inspection_date: findField(columnNames, ['last_inspection_date', 'lastInspectionDate']),
+      current_gas_volume: findField(columnNames, ['current_gas_volume', 'volume']),
+      max_gas_volume: findField(columnNames, ['max_gas_volume', 'size_kg', 'capacity']),
       notes: findField(columnNames, 'notes'),
       created_at: findField(columnNames, 'created_at'),
       updated_at: findField(columnNames, 'updated_at')
     };
+
 
 
     const cylinders = [];
@@ -76,10 +82,13 @@ module.exports = {
 
           const mapped = {};
           Object.keys(cylinderData).forEach(key => {
-            mapped[map[key]] = cylinderData[key];
+            if (map[key]) {
+              mapped[map[key]] = cylinderData[key];
+            }
           });
-          mapped[map.created_at] = new Date();
-          mapped[map.updated_at] = new Date();
+          if (map.created_at) mapped[map.created_at] = new Date();
+          if (map.updated_at) mapped[map.updated_at] = new Date();
+
 
           cylinders.push(mapped);
         }

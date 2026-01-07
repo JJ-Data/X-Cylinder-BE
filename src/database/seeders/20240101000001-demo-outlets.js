@@ -18,21 +18,27 @@ module.exports = {
     const columnNames = columns.map(c => c.Field || c.column_name);
     console.log('Discovered columns for outlets:', columnNames);
 
-    const findField = (cols, target) => {
-      const t = target.toLowerCase().replace(/_/g, '');
-      return cols.find(c => c.toLowerCase().replace(/_/g, '') === t) || target;
+    const findField = (cols, targets) => {
+      if (!Array.isArray(targets)) targets = [targets];
+      for (const target of targets) {
+        const t = target.toLowerCase().replace(/_/g, '');
+        const found = cols.find(c => c.toLowerCase().replace(/_/g, '') === t);
+        if (found) return found;
+      }
+      return null;
     };
 
     const map = {
       name: findField(columnNames, 'name'),
-      location: findField(columnNames, 'location'),
-      contact_phone: findField(columnNames, 'contact_phone'),
-      contact_email: findField(columnNames, 'contact_email'),
+      location: findField(columnNames, ['location', 'address']),
+      contact_phone: findField(columnNames, ['contact_phone', 'phone']),
+      contact_email: findField(columnNames, ['contact_email', 'email']),
       status: findField(columnNames, 'status'),
-      manager_id: findField(columnNames, 'manager_id'),
+      manager_id: findField(columnNames, ['manager_id', 'user_id']),
       created_at: findField(columnNames, 'created_at'),
       updated_at: findField(columnNames, 'updated_at')
     };
+
 
 
     const outlets = [
@@ -71,11 +77,14 @@ module.exports = {
     ].map(o => {
       const mapped = {};
       Object.keys(o).forEach(key => {
-        mapped[map[key]] = o[key];
+        if (map[key]) {
+          mapped[map[key]] = o[key];
+        }
       });
-      mapped[map.created_at] = new Date();
-      mapped[map.updated_at] = new Date();
+      if (map.created_at) mapped[map.created_at] = new Date();
+      if (map.updated_at) mapped[map.updated_at] = new Date();
       return mapped;
+
     });
 
     await queryInterface.bulkInsert('outlets', outlets, {});
