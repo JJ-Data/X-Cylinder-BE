@@ -13,8 +13,9 @@ const syncDatabase = async () => {
         console.log('✅ Connection established.');
 
         // Sync all defined models to the database
-        // alter: true -> checks current state and updates it to match model definition
-        await sequelize.sync({ alter: true });
+        // Removed { alter: true } to prevent "Too many keys" error on repeated runs.
+        // Default sync() will create missing tables (outlets, cylinders) but won't crash on existing ones.
+        await sequelize.sync();
 
         console.log('✅ DATABASE SYNC COMPLETE.');
         console.log('   All tables should now exist.');
