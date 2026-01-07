@@ -7,9 +7,16 @@ echo "---------------------------------------------------"
 echo "🚀 STARTING RAILWAY DEPLOYMENT ORCHESTRATOR"
 echo "---------------------------------------------------"
 
+# 0. Sync Database Schema (Critical for missing tables)
+echo "🔄 Step 0: Syncing/Repairing Database Schema..."
+# Using the same runtime config as 'start' to ensure aliases work
+export TS_NODE_PROJECT=tsconfig.prod.json
+node -r tsconfig-paths/register dist/scripts/sync-database.js || echo "⚠️ Sync script invoked but failed or script not found. Proceeding to migrate..."
+
 # 1. Run Migrations
 echo "📂 Step 1: Running database migrations..."
 npx sequelize-cli db:migrate --config src/database/config.js
+
 
 # 2. Run Seeders
 echo "🌱 Step 2: Running database seeders..."
