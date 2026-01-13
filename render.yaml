@@ -5,7 +5,7 @@ services:
     runtime: node
     region: oregon # Choose: oregon, frankfurt, singapore, ohio
     plan: free # free tier - spins down after 15 mins of inactivity
-    buildCommand: pnpm install --prod=false && pnpm build
+    buildCommand: NODE_ENV=development pnpm install && pnpm build
     startCommand: pnpm render:start
     envVars:
       - key: NODE_ENV
