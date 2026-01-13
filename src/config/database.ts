@@ -4,7 +4,7 @@ import { config } from './environment';
 const sequelizeConfig = {
   host: config.database.host,
   port: config.database.port,
-  dialect: 'mysql' as const,
+  dialect: 'postgres' as const,
   // Force logging to debug connection issues in production
   logging: console.log,
   pool: {
@@ -40,20 +40,13 @@ export const connectDatabase = async (): Promise<void> => {
 
       // Uncomment below only when you need to sync the database
 
-      // Disable foreign key checks to handle circular dependencies
-      // await sequelize.query('SET FOREIGN_KEY_CHECKS = 0');
-      // console.log('Foreign key checks disabled for sync.');
-
+      // PostgreSQL doesn't require FOREIGN_KEY_CHECKS like MySQL
       // Optional: Clear login sessions to avoid truncation errors with JWT tokens
       // Uncomment the line below if you encounter session_id truncation errors
-      // await sequelize.query('TRUNCATE TABLE login_sessions');
+      // await sequelize.query('TRUNCATE TABLE login_sessions CASCADE');
 
       // Sync database schema
       // await sequelize.sync({ alter: true });
-
-      // Re-enable foreign key checks
-      // await sequelize.query('SET FOREIGN_KEY_CHECKS = 1');
-      // console.log('Foreign key checks re-enabled.');
 
       console.log('Database synchronized successfully.');
     }
