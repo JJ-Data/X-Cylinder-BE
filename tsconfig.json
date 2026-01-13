@@ -75,6 +75,7 @@
     "coverage",
     "**/*.spec.ts",
     "**/*.test.ts",
+    "src/tests/**/*",
     "src/services/cache/examples/**"
   ],
   "ts-node": {
