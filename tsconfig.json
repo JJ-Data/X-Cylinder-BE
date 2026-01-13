@@ -27,8 +27,7 @@
     "declarationMap": true,
     "removeComments": true,
     "types": [
-      "node",
-      "jest"
+      "node"
     ],
     "baseUrl": ".",
     "paths": {
