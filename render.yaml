@@ -1,0 +1,133 @@
+services:
+  # Web Service - API Backend
+  - type: web
+    name: xcylinder-api
+    runtime: node
+    region: oregon # Choose: oregon, frankfurt, singapore, ohio
+    plan: free # free tier - spins down after 15 mins of inactivity
+    buildCommand: pnpm install && pnpm build
+    startCommand: pnpm render:start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: PNPM_VERSION
+        value: 8.15.5
+      
+      # Database - Will be auto-filled when you create the database
+      - key: DB_HOST
+        fromDatabase:
+          name: xcylinder-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: xcylinder-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: xcylinder-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: xcylinder-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: xcylinder-db
+          property: password
+      
+      # JWT Secrets - SET THESE IN RENDER DASHBOARD
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_EXPIRE
+        value: 15m
+      - key: JWT_REFRESH_EXPIRE
+        value: 7d
+      
+      # Email - Configure based on your provider
+      - key: EMAIL_PROVIDER
+        value: smtp
+      - key: EMAIL_FROM
+        sync: false # Set manually
+      - key: EMAIL_REPLY_TO
+        sync: false
+      - key: EMAIL_HOST
+        sync: false
+      - key: EMAIL_PORT
+        value: 587
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASSWORD
+        sync: false
+      - key: EMAIL_SECURE
+        value: false
+      
+      # Redis - Use Upstash (free tier)
+      - key: REDIS_ENABLED
+        value: true
+      - key: REDIS_HOST
+        sync: false # Get from Upstash
+      - key: REDIS_PORT
+        sync: false
+      - key: REDIS_PASSWORD
+        sync: false
+      - key: REDIS_DB
+        value: 0
+      - key: REDIS_KEY_PREFIX
+        value: xcylinder:
+      
+      # Application URLs
+      - key: FRONTEND_URL
+        sync: false # Your Vercel URL
+      - key: APP_URL
+        value: https://xcylinder-api.onrender.com
+      - key: ALLOWED_ORIGINS
+        sync: false # Your Vercel URL
+      
+      # Storage - Start with local, upgrade to S3 later
+      - key: STORAGE_PROVIDER
+        value: local
+      - key: LOCAL_STORAGE_PATH
+        value: /opt/render/project/src/uploads
+      - key: LOCAL_STORAGE_BASE_URL
+        value: https://xcylinder-api.onrender.com
+      
+      # Rate Limiting
+      - key: RATE_LIMIT_WINDOW_MS
+        value: 900000
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: 100
+      
+      # Logging
+      - key: LOG_LEVEL
+        value: info
+      - key: LOG_FILE_PATH
+        value: logs/app.log
+      
+      # Email Queue
+      - key: EMAIL_RETRY_ATTEMPTS
+        value: 3
+      - key: EMAIL_RETRY_DELAY
+        value: 30000
+      - key: EMAIL_QUEUE_CONCURRENCY
+        value: 5
+      
+      # App Config
+      - key: COMPANY_NAME
+        value: CellerHut Logistics
+      - key: SUPPORT_EMAIL
+        sync: false
+      - key: TZ
+        value: UTC
+
+databases:
+  # PostgreSQL Database - Free for 90 days, then $7/month
+  - name: xcylinder-db
+    databaseName: xcylinder_db
+    user: xcylinder_user
+    plan: free # free for 90 days
+    region: oregon # Same as web service
+    ipAllowList: [] # Empty = allow all (Render services auto-allowed)

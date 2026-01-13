@@ -17,15 +17,14 @@
     "db:create": "ts-node src/scripts/createDatabase.ts",
     "db:migrate": "sequelize-cli db:migrate",
     "db:migrate:undo": "sequelize-cli db:migrate:undo",
-    "db:migrate:undo": "sequelize-cli db:migrate:undo",
     "db:seed": "TS_NODE_PROJECT=tsconfig.prod.json node -r tsconfig-paths/register scripts/force-sync.js && sequelize-cli db:seed:all",
-    "db:seed:debug": "sequelize-cli db:seed:all --debug",
     "db:seed:debug": "sequelize-cli db:seed:all --debug",
     "db:migration:generate": "sequelize-cli migration:generate",
     "db:launch": "bash db.sh",
     "db:clear-sessions": "ts-node src/scripts/clear-login-sessions.ts",
     "docs:new-feature": "bash scripts/create-feature-doc.sh",
-    "railway:start": "bash scripts/railway-deploy.sh"
+    "railway:start": "bash scripts/railway-deploy.sh",
+    "render:start": "bash scripts/render-deploy.sh"
   },
   "keywords": [
     "typescript",
