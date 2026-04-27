@@ -9,7 +9,7 @@ const envVarsSchema = Joi.object({
 
   // Database — DATABASE_URL takes precedence (Render sets it when a DB is linked).
   // DB_* vars are used as fallback when DATABASE_URL is absent.
-  DATABASE_URL: Joi.string().uri().optional().description('Full Postgres connection URL'),
+  DATABASE_URL: Joi.string().optional().description('Full Postgres connection URL'),
   DB_HOST: Joi.string().when('DATABASE_URL', { is: Joi.exist(), then: Joi.optional(), otherwise: Joi.required() }).description('Database host'),
   DB_PORT: Joi.number().default(5432),
   DB_NAME: Joi.string().when('DATABASE_URL', { is: Joi.exist(), then: Joi.optional(), otherwise: Joi.required() }).description('Database name'),
@@ -95,7 +95,7 @@ const envVarsSchema = Joi.object({
   SPACES_CDN_URL: Joi.string().uri().optional(),
 
   // Redis — REDIS_URL takes precedence (used by Upstash and other managed providers).
-  REDIS_URL: Joi.string().uri().optional().description('Full Redis connection URL (e.g. rediss://... from Upstash)'),
+  REDIS_URL: Joi.string().optional().description('Full Redis connection URL (e.g. rediss://... from Upstash)'),
   REDIS_HOST: Joi.string().default('localhost'),
   REDIS_PORT: Joi.number().default(6379),
   REDIS_PASSWORD: Joi.string().optional().allow(''),
