@@ -28,8 +28,8 @@ module.exports = {
         allowNull: false,
       },
       role: {
-        type: Sequelize.ENUM('admin', 'user'),
-        defaultValue: 'user',
+        type: Sequelize.ENUM('admin', 'customer', 'staff', 'refill_operator'),
+        defaultValue: 'customer',
         allowNull: false,
       },
       is_active: {
@@ -54,7 +54,7 @@ module.exports = {
       updated_at: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'),
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
     });
 
