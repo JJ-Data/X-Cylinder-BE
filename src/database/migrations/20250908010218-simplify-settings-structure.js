@@ -26,6 +26,16 @@ module.exports = {
         await queryInterface.removeColumn('business_settings', 'customer_tier', { transaction });
       }
       
+      // Drop settings_audit first (it has FK constraint on pricing_rules)
+      const [auditTables] = await queryInterface.sequelize.query(
+        `SELECT table_name FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = 'settings_audit'`,
+        { transaction }
+      );
+
+      if (auditTables.length > 0) {
+        await queryInterface.dropTable('settings_audit', { transaction });
+      }
+
       // Drop pricing_rules table if exists
       const [tables] = await queryInterface.sequelize.query(
         `SELECT table_name FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = 'pricing_rules'`,
@@ -34,16 +44,6 @@ module.exports = {
 
       if (tables.length > 0) {
         await queryInterface.dropTable('pricing_rules', { transaction });
-      }
-
-      // Drop settings_audit table if exists
-      const [auditTables] = await queryInterface.sequelize.query(
-        `SELECT table_name FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = 'settings_audit'`,
-        { transaction }
-      );
-
-      if (auditTables.length > 0) {
-        await queryInterface.dropTable('settings_audit', { transaction });
       }
       
       await transaction.commit();
