@@ -7,12 +7,14 @@ const envVarsSchema = Joi.object({
   NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
   PORT: Joi.number().default(3000),
 
-  // Database
-  DB_HOST: Joi.string().required().description('Database host'),
-  DB_PORT: Joi.number().default(3306),
-  DB_NAME: Joi.string().required().description('Database name'),
-  DB_USER: Joi.string().required().description('Database user'),
-  DB_PASSWORD: Joi.string().required().description('Database password'),
+  // Database — DATABASE_URL takes precedence (Render sets it when a DB is linked).
+  // DB_* vars are used as fallback when DATABASE_URL is absent.
+  DATABASE_URL: Joi.string().uri().optional().description('Full Postgres connection URL'),
+  DB_HOST: Joi.string().when('DATABASE_URL', { is: Joi.exist(), then: Joi.optional(), otherwise: Joi.required() }).description('Database host'),
+  DB_PORT: Joi.number().default(5432),
+  DB_NAME: Joi.string().when('DATABASE_URL', { is: Joi.exist(), then: Joi.optional(), otherwise: Joi.required() }).description('Database name'),
+  DB_USER: Joi.string().when('DATABASE_URL', { is: Joi.exist(), then: Joi.optional(), otherwise: Joi.required() }).description('Database user'),
+  DB_PASSWORD: Joi.string().when('DATABASE_URL', { is: Joi.exist(), then: Joi.optional(), otherwise: Joi.required() }).description('Database password'),
 
   // JWT
   JWT_SECRET: Joi.string().required().description('JWT secret key'),
@@ -92,7 +94,8 @@ const envVarsSchema = Joi.object({
   SPACES_DEFAULT_ACL: Joi.string().valid('private', 'public-read').default('private'),
   SPACES_CDN_URL: Joi.string().uri().optional(),
 
-  // Redis
+  // Redis — REDIS_URL takes precedence (used by Upstash and other managed providers).
+  REDIS_URL: Joi.string().uri().optional().description('Full Redis connection URL (e.g. rediss://... from Upstash)'),
   REDIS_HOST: Joi.string().default('localhost'),
   REDIS_PORT: Joi.number().default(6379),
   REDIS_PASSWORD: Joi.string().optional().allow(''),

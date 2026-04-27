@@ -1,14 +1,15 @@
 import { Sequelize } from 'sequelize';
 import { config } from './environment';
 
-const sequelizeConfig = {
-  host: config.database.host,
-  port: config.database.port,
-  dialect: 'postgres' as const,
-  // Force logging to debug connection issues in production
-  logging: console.log,
-  pool: {
+const sslOptions =
+  config.isProduction
+    ? { ssl: { require: true, rejectUnauthorized: false } }
+    : {};
 
+const baseConfig = {
+  dialect: 'postgres' as const,
+  logging: config.isDevelopment ? console.log : false,
+  pool: {
     max: 5,
     min: 0,
     acquire: 30000,
@@ -19,14 +20,18 @@ const sequelizeConfig = {
     underscored: true,
     freezeTableName: true,
   },
+  dialectOptions: sslOptions,
 };
 
-export const sequelize = new Sequelize(
-  config.database.name,
-  config.database.user,
-  config.database.password,
-  sequelizeConfig
-);
+// Render automatically sets DATABASE_URL when a database is linked.
+// Prefer it over individual DB_* vars so linking is the only step needed.
+export const sequelize = process.env.DATABASE_URL
+  ? new Sequelize(process.env.DATABASE_URL, baseConfig)
+  : new Sequelize(config.database.name, config.database.user, config.database.password, {
+      ...baseConfig,
+      host: config.database.host,
+      port: config.database.port,
+    });
 
 export const connectDatabase = async (): Promise<void> => {
   try {

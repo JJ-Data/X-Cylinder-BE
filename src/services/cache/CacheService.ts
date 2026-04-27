@@ -39,28 +39,43 @@ export class CacheService {
 
   private async connect(): Promise<void> {
     try {
-      const redisOptions: RedisOptions = {
-        host: config.redis.host,
-        port: config.redis.port,
-        password: config.redis.password || undefined,
-        db: config.redis.db,
-        keyPrefix: this.keyPrefix,
-        enableOfflineQueue: config.redis.enableOfflineQueue,
-        connectTimeout: config.redis.connectTimeout,
-        maxRetriesPerRequest: config.redis.maxRetries,
-        retryStrategy: (times: number) => {
-          if (times > config.redis.maxRetries) {
-            logger.error('Redis: Maximum retry attempts reached');
-            return null;
-          }
-          const delay = Math.min(times * 1000, 3000);
-          logger.warn(`Redis: Retrying connection in ${delay}ms (attempt ${times})`);
-          return delay;
-        },
-        lazyConnect: true,
+      const retryStrategy = (times: number) => {
+        if (times > config.redis.maxRetries) {
+          logger.error('Redis: Maximum retry attempts reached');
+          return null;
+        }
+        const delay = Math.min(times * 1000, 3000);
+        logger.warn(`Redis: Retrying connection in ${delay}ms (attempt ${times})`);
+        return delay;
       };
 
-      this.client = new Redis(redisOptions);
+      // REDIS_URL is provided by Upstash and other managed Redis services.
+      // It uses the rediss:// scheme (TLS) and includes auth in the URL.
+      if (process.env.REDIS_URL) {
+        this.client = new Redis(process.env.REDIS_URL, {
+          keyPrefix: this.keyPrefix,
+          enableOfflineQueue: config.redis.enableOfflineQueue,
+          connectTimeout: config.redis.connectTimeout,
+          maxRetriesPerRequest: config.redis.maxRetries,
+          retryStrategy,
+          lazyConnect: true,
+          tls: {},
+        });
+      } else {
+        const redisOptions: RedisOptions = {
+          host: config.redis.host,
+          port: config.redis.port,
+          password: config.redis.password || undefined,
+          db: config.redis.db,
+          keyPrefix: this.keyPrefix,
+          enableOfflineQueue: config.redis.enableOfflineQueue,
+          connectTimeout: config.redis.connectTimeout,
+          maxRetriesPerRequest: config.redis.maxRetries,
+          retryStrategy,
+          lazyConnect: true,
+        };
+        this.client = new Redis(redisOptions);
+      }
 
       // Set up event handlers
       this.client.on('connect', () => {
