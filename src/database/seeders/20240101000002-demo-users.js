@@ -17,8 +17,10 @@ module.exports = {
     const hashedPassword = await bcrypt.hash('Test@123', 10);
 
     // 2. Discover column names for users and outlets
-    const [userColumns] = await queryInterface.sequelize.query('DESCRIBE users;');
-    const userColNames = userColumns.map(c => c.Field || c.column_name);
+    const [userColumns] = await queryInterface.sequelize.query(
+      `SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND table_schema = current_schema();`
+    );
+    const userColNames = userColumns.map(c => c.column_name);
     console.log('Discovered columns for users:', userColNames);
 
     const findField = (cols, targets) => {
@@ -195,8 +197,10 @@ module.exports = {
     await queryInterface.bulkInsert('users', users, {});
 
     // Discover column names for outlets
-    const [outletColumns] = await queryInterface.sequelize.query('DESCRIBE outlets;');
-    const outletColNames = outletColumns.map(c => c.Field || c.column_name);
+    const [outletColumns] = await queryInterface.sequelize.query(
+      `SELECT column_name FROM information_schema.columns WHERE table_name = 'outlets' AND table_schema = current_schema();`
+    );
+    const outletColNames = outletColumns.map(c => c.column_name);
     const managerCol = findField(outletColNames, ['manager_id', 'user_id']);
 
     // Update outlets with manager IDs

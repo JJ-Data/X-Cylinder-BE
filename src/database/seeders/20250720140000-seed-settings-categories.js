@@ -26,8 +26,10 @@ module.exports = {
     };
 
     // Discover column names
-    const [columns] = await queryInterface.sequelize.query('DESCRIBE setting_categories;');
-    const columnNames = columns.map(c => c.Field || c.column_name);
+    const [columns] = await queryInterface.sequelize.query(
+      `SELECT column_name FROM information_schema.columns WHERE table_name = 'setting_categories' AND table_schema = current_schema();`
+    );
+    const columnNames = columns.map(c => c.column_name);
     console.log('Discovered columns for setting_categories:', columnNames);
 
     const map = {

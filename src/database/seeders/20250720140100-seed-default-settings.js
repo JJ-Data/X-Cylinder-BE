@@ -27,8 +27,10 @@ module.exports = {
 
     // Default pricing settings - simplified structure
     // Discover column names
-    const [columns] = await queryInterface.sequelize.query('DESCRIBE business_settings;');
-    const columnNames = columns.map(c => c.Field || c.column_name);
+    const [columns] = await queryInterface.sequelize.query(
+      `SELECT column_name FROM information_schema.columns WHERE table_name = 'business_settings' AND table_schema = current_schema();`
+    );
+    const columnNames = columns.map(c => c.column_name);
     console.log('Discovered columns for business_settings:', columnNames);
 
     const map = {

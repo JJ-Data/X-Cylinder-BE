@@ -24,15 +24,21 @@ module.exports = {
     };
 
     // Discover column names for cylinders, lease_records, and users
-    const [cylColumns] = await queryInterface.sequelize.query('DESCRIBE cylinders;');
-    const cylColNames = cylColumns.map(c => c.Field || c.column_name);
+    const [cylColumns] = await queryInterface.sequelize.query(
+      `SELECT column_name FROM information_schema.columns WHERE table_name = 'cylinders' AND table_schema = current_schema();`
+    );
+    const cylColNames = cylColumns.map(c => c.column_name);
     const cylOutletCol = findField(cylColNames, ['current_outlet_id', 'outlet_id']);
 
-    const [leaseColumns] = await queryInterface.sequelize.query('DESCRIBE lease_records;');
-    const leaseColNames = leaseColumns.map(c => c.Field || c.column_name);
+    const [leaseColumns] = await queryInterface.sequelize.query(
+      `SELECT column_name FROM information_schema.columns WHERE table_name = 'lease_records' AND table_schema = current_schema();`
+    );
+    const leaseColNames = leaseColumns.map(c => c.column_name);
 
-    const [uColumns] = await queryInterface.sequelize.query('DESCRIBE users;');
-    const userColNames = uColumns.map(c => c.Field || c.column_name);
+    const [uColumns] = await queryInterface.sequelize.query(
+      `SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND table_schema = current_schema();`
+    );
+    const userColNames = uColumns.map(c => c.column_name);
     const userOutletCol = findField(userColNames, ['outlet_id', 'outletId']);
 
     console.log('Discovered columns:', { cylinders: cylColNames, lease_records: leaseColNames, users: userColNames });

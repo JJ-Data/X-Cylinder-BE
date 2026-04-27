@@ -14,8 +14,10 @@ module.exports = {
     }
 
     // 2. Discover column names
-    const [columns] = await queryInterface.sequelize.query('DESCRIBE cylinders;');
-    const columnNames = columns.map(c => c.Field || c.column_name);
+    const [columns] = await queryInterface.sequelize.query(
+      `SELECT column_name FROM information_schema.columns WHERE table_name = 'cylinders' AND table_schema = current_schema();`
+    );
+    const columnNames = columns.map(c => c.column_name);
     console.log('Discovered columns for cylinders:', columnNames);
 
     const findField = (cols, targets) => {
