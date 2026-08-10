@@ -1273,29 +1273,31 @@ export class AnalyticsService {
   ): Promise<any[]> {
     const outletFilter = outletId ? `AND outlet_id = ${outletId}` : '';
     
+    // Postgres TO_CHAR format codes (this was previously MySQL's DATE_FORMAT syntax,
+    // which doesn't exist in Postgres and made this query throw on every call).
     let dateFormat: string;
     switch (period) {
       case 'daily':
-        dateFormat = '%Y-%m-%d';
+        dateFormat = 'YYYY-MM-DD';
         break;
       case 'weekly':
-        dateFormat = '%Y-%u';
+        dateFormat = 'IYYY-IW'; // ISO year + ISO week number
         break;
       case 'monthly':
-        dateFormat = '%Y-%m';
+        dateFormat = 'YYYY-MM';
         break;
       case 'yearly':
-        dateFormat = '%Y';
+        dateFormat = 'YYYY';
         break;
       default:
-        dateFormat = '%Y-%m-%d'; // Default to daily
+        dateFormat = 'YYYY-MM-DD'; // Default to daily
         break;
     }
 
     const results = await sequelize.query<any>(
       `
-      SELECT 
-        DATE_FORMAT(transaction_date, '${dateFormat}') as period,
+      SELECT
+        TO_CHAR(transaction_date, '${dateFormat}') as period,
         SUM(revenue) as revenue,
         SUM(lease_revenue) as leaseRevenue,
         SUM(refill_revenue) as refillRevenue,
