@@ -1,4 +1,5 @@
 import { User } from '@models/User.model';
+import { LeaseRecord, RefillRecord, TransferRecord, SwapRecord } from '@models/index';
 import { UserUpdateAttributes, UserPublicData, UserCreationAttributes } from '@app-types/user.types';
 import { PaginationQuery } from '@app-types/common.types';
 import { NotFoundError, ConflictError, BadRequestError } from '@utils/errors';
@@ -263,6 +264,26 @@ export class UserService {
 
     if (!user) {
       throw new NotFoundError('User not found');
+    }
+
+    // Users referenced by lease/refill/transfer/swap records can't be hard-deleted
+    // (DB has these as RESTRICT foreign keys) - check up front for a clear error
+    // instead of letting the FK violation surface as a 500.
+    const [leaseCount, refillCount, transferCount, swapCount] = await Promise.all([
+      LeaseRecord.count({
+        where: { [Op.or]: [{ customerId: id }, { staffId: id }] },
+      }),
+      RefillRecord.count({ where: { operatorId: id } }),
+      TransferRecord.count({
+        where: { [Op.or]: [{ transferredById: id }, { acceptedById: id }] },
+      }),
+      SwapRecord.count({ where: { staffId: id } }),
+    ]);
+
+    if (leaseCount || refillCount || transferCount || swapCount) {
+      throw new ConflictError(
+        'This user cannot be deleted because they have existing lease, refill, transfer, or swap records. Deactivate the account instead.'
+      );
     }
 
     await user.destroy();

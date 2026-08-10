@@ -21,11 +21,13 @@ export class ResponseUtil {
     res: Response,
     message: string,
     statusCode: number = CONSTANTS.HTTP_STATUS.INTERNAL_SERVER_ERROR,
-    errors?: Record<string, string[]>
+    errors?: Record<string, string[]>,
+    code?: string
   ): Response {
     const response: ApiResponse = {
       success: false,
       error: message,
+      code,
       errors,
     };
     return res.status(statusCode).json(response);
@@ -78,9 +80,10 @@ export class ResponseUtil {
 
   public static unauthorized(
     res: Response,
-    message: string = CONSTANTS.ERROR_MESSAGES.UNAUTHORIZED
+    message: string = CONSTANTS.ERROR_MESSAGES.UNAUTHORIZED,
+    code: string = 'UNAUTHORIZED'
   ): Response {
-    return this.error(res, message, CONSTANTS.HTTP_STATUS.UNAUTHORIZED);
+    return this.error(res, message, CONSTANTS.HTTP_STATUS.UNAUTHORIZED, undefined, code);
   }
 
   public static forbidden(

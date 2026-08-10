@@ -32,7 +32,7 @@ export const authenticate = async (
     }
 
     if (!token) {
-      throw new UnauthorizedError('No token provided');
+      throw new UnauthorizedError('No token provided', 'NO_TOKEN');
     }
 
     const payload = verifyJWT(token);
@@ -43,7 +43,7 @@ export const authenticate = async (
     });
 
     if (!user || !user.getDataValue('isActive')) {
-      throw new UnauthorizedError('User not found or inactive');
+      throw new UnauthorizedError('User not found or inactive', 'USER_INACTIVE');
     }
 
     req.user = {

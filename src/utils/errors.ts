@@ -4,17 +4,20 @@ export class AppError extends Error {
   public readonly statusCode: number;
   public readonly isOperational: boolean;
   public readonly errors?: Record<string, string[]>;
+  public readonly code?: string;
 
   constructor(
     message: string,
     statusCode: number = CONSTANTS.HTTP_STATUS.INTERNAL_SERVER_ERROR,
     isOperational: boolean = true,
-    errors?: Record<string, string[]>
+    errors?: Record<string, string[]>,
+    code?: string
   ) {
     super(message);
     this.statusCode = statusCode;
     this.isOperational = isOperational;
     this.errors = errors;
+    this.code = code;
 
     Object.setPrototypeOf(this, AppError.prototype);
     Error.captureStackTrace(this, this.constructor);
@@ -34,8 +37,8 @@ export class ValidationError extends AppError {
 }
 
 export class UnauthorizedError extends AppError {
-  constructor(message: string = CONSTANTS.ERROR_MESSAGES.UNAUTHORIZED) {
-    super(message, CONSTANTS.HTTP_STATUS.UNAUTHORIZED);
+  constructor(message: string = CONSTANTS.ERROR_MESSAGES.UNAUTHORIZED, code: string = 'UNAUTHORIZED') {
+    super(message, CONSTANTS.HTTP_STATUS.UNAUTHORIZED, true, undefined, code);
     Object.setPrototypeOf(this, UnauthorizedError.prototype);
   }
 }

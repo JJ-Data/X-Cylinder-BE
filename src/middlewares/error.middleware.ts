@@ -49,21 +49,30 @@ export const errorHandler = (
 
   // Handle JWT errors
   if (error.name === 'JsonWebTokenError') {
-    ResponseUtil.unauthorized(res, CONSTANTS.ERROR_MESSAGES.INVALID_TOKEN);
+    ResponseUtil.unauthorized(res, CONSTANTS.ERROR_MESSAGES.INVALID_TOKEN, 'TOKEN_INVALID');
     return;
   }
 
   if (error.name === 'TokenExpiredError') {
-    ResponseUtil.unauthorized(res, CONSTANTS.ERROR_MESSAGES.TOKEN_EXPIRED);
+    ResponseUtil.unauthorized(res, CONSTANTS.ERROR_MESSAGES.TOKEN_EXPIRED, 'TOKEN_EXPIRED');
+    return;
+  }
+
+  // Handle FK constraint violations (e.g. deleting a record still referenced elsewhere)
+  if (error.name === 'SequelizeForeignKeyConstraintError') {
+    ResponseUtil.conflict(
+      res,
+      'This record cannot be deleted because it is still referenced by other records'
+    );
     return;
   }
 
   // Handle operational errors
   if (error instanceof AppError) {
     if (error.errors) {
-      ResponseUtil.error(res, error.message, error.statusCode, error.errors);
+      ResponseUtil.error(res, error.message, error.statusCode, error.errors, error.code);
     } else {
-      ResponseUtil.error(res, error.message, error.statusCode);
+      ResponseUtil.error(res, error.message, error.statusCode, undefined, error.code);
     }
     return;
   }

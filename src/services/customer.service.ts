@@ -1,4 +1,4 @@
-import { User, LeaseRecord, Outlet } from '@models/index';
+import { User, LeaseRecord, Outlet, SwapRecord, Cylinder } from '@models/index';
 import { OutletAttributes } from '@app-types/outlet.types';
 import { UserCreationAttributes, UserPublicData } from '@app-types/user.types';
 import { AppError } from '@utils/errors';
@@ -324,6 +324,116 @@ export class CustomerService {
       total: count,
       page,
       totalPages: Math.ceil(count / limit),
+    };
+  }
+
+  async getCustomerHistory(id: number): Promise<{
+    customer: UserPublicData;
+    leaseHistory: any[];
+    swapHistory: any[];
+  }> {
+    const customer = await User.findByPk(id);
+    if (!customer) {
+      throw new AppError('Customer not found', CONSTANTS.HTTP_STATUS.NOT_FOUND);
+    }
+
+    if (customer.getDataValue('role') !== CONSTANTS.USER_ROLES.CUSTOMER) {
+      throw new AppError('User is not a customer', CONSTANTS.HTTP_STATUS.BAD_REQUEST);
+    }
+
+    const leaseRecords = await LeaseRecord.findAll({
+      where: { customerId: id },
+      include: [
+        { model: Cylinder, as: 'cylinder', attributes: ['id', 'serialNumber', 'capacity'] },
+        { model: User, as: 'staff', attributes: ['id', 'email', 'firstName', 'lastName'] },
+        { model: Outlet, as: 'outlet', attributes: ['id', 'name', 'location'] },
+      ],
+      order: [['leaseDate', 'DESC']],
+    });
+
+    const leaseIds = leaseRecords
+      .map((record) => record.getDataValue('id'))
+      .filter((leaseId): leaseId is number => leaseId !== undefined);
+
+    const swapRecords = leaseIds.length
+      ? await SwapRecord.findAll({
+          where: { leaseId: { [Op.in]: leaseIds } },
+          include: [
+            { model: Cylinder, as: 'oldCylinder', attributes: ['id', 'serialNumber'] },
+            { model: Cylinder, as: 'newCylinder', attributes: ['id', 'serialNumber'] },
+            { model: User, as: 'staff', attributes: ['id', 'email', 'firstName', 'lastName'] },
+          ],
+          order: [['swapDate', 'DESC']],
+        })
+      : [];
+
+    return {
+      customer: customer.toPublicJSON(),
+      leaseHistory: leaseRecords.map((record) => record.toJSON()),
+      swapHistory: swapRecords.map((record) => record.toJSON()),
+    };
+  }
+
+  async getCustomerDashboard(id: number): Promise<{
+    customer: UserPublicData;
+    summary: {
+      activeLeases: number;
+      totalLeases: number;
+      overdueLeases: number;
+      totalSpent: number;
+    };
+    activeLeaseDetails: any[];
+    recentActivity: any[];
+  }> {
+    const customer = await User.findByPk(id);
+    if (!customer) {
+      throw new AppError('Customer not found', CONSTANTS.HTTP_STATUS.NOT_FOUND);
+    }
+
+    if (customer.getDataValue('role') !== CONSTANTS.USER_ROLES.CUSTOMER) {
+      throw new AppError('User is not a customer', CONSTANTS.HTTP_STATUS.BAD_REQUEST);
+    }
+
+    const [
+      totalLeases,
+      activeLeases,
+      overdueLeases,
+      leaseAmountTotal,
+      lateFeesTotal,
+      activeLeaseDetails,
+      recentActivity,
+    ] = await Promise.all([
+      LeaseRecord.count({ where: { customerId: id } }),
+      LeaseRecord.count({ where: { customerId: id, leaseStatus: 'active' } }),
+      LeaseRecord.count({ where: { customerId: id, leaseStatus: 'overdue' } }),
+      LeaseRecord.sum('leaseAmount', { where: { customerId: id } }),
+      LeaseRecord.sum('lateFees', { where: { customerId: id } }),
+      LeaseRecord.findAll({
+        where: { customerId: id, leaseStatus: { [Op.in]: ['active', 'overdue'] } },
+        include: [
+          { model: Cylinder, as: 'cylinder', attributes: ['id', 'serialNumber', 'capacity'] },
+          { model: Outlet, as: 'outlet', attributes: ['id', 'name', 'location'] },
+        ],
+        order: [['expectedReturnDate', 'ASC']],
+      }),
+      LeaseRecord.findAll({
+        where: { customerId: id },
+        include: [{ model: Cylinder, as: 'cylinder', attributes: ['id', 'serialNumber'] }],
+        order: [['updatedAt', 'DESC']],
+        limit: 5,
+      }),
+    ]);
+
+    return {
+      customer: customer.toPublicJSON(),
+      summary: {
+        activeLeases,
+        totalLeases,
+        overdueLeases,
+        totalSpent: (leaseAmountTotal || 0) + (lateFeesTotal || 0),
+      },
+      activeLeaseDetails: activeLeaseDetails.map((record) => record.toJSON()),
+      recentActivity: recentActivity.map((record) => record.toJSON()),
     };
   }
 

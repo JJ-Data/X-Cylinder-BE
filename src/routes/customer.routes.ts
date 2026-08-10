@@ -53,6 +53,20 @@ router.get(
   customerController.getCustomerById
 );
 
+// Get customer dashboard - own summary metrics (Customer can see own, Staff/Admin can see any)
+router.get(
+  '/:id/dashboard',
+  authorize(CONSTANTS.USER_ROLES.ADMIN, CONSTANTS.USER_ROLES.STAFF, CONSTANTS.USER_ROLES.CUSTOMER),
+  customerController.getCustomerDashboard
+);
+
+// Get customer history - leases and swaps (Customer can see own, Staff/Admin can see any)
+router.get(
+  '/:id/history',
+  authorize(CONSTANTS.USER_ROLES.ADMIN, CONSTANTS.USER_ROLES.STAFF, CONSTANTS.USER_ROLES.CUSTOMER),
+  customerController.getCustomerHistory
+);
+
 // Resend payment link (Admin and Staff)
 router.post(
   '/:userId/resend-payment',

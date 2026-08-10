@@ -47,6 +47,28 @@ export class CustomerController {
     return ResponseUtil.success(res, customer);
   });
 
+  getCustomerDashboard = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+
+    // Customers can only see their own dashboard
+    const targetId = req.user!.role === CONSTANTS.USER_ROLES.CUSTOMER ? req.user!.id : Number(id);
+
+    const dashboard = await customerService.getCustomerDashboard(targetId);
+
+    return ResponseUtil.success(res, dashboard);
+  });
+
+  getCustomerHistory = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+
+    // Customers can only see their own history
+    const targetId = req.user!.role === CONSTANTS.USER_ROLES.CUSTOMER ? req.user!.id : Number(id);
+
+    const history = await customerService.getCustomerHistory(targetId);
+
+    return ResponseUtil.success(res, history);
+  });
+
   searchCustomers = asyncHandler(async (req: AuthRequest, res: Response) => {
     const filters = {
       searchTerm: req.query.searchTerm as string | undefined,
