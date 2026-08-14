@@ -682,9 +682,15 @@ export class AuthService {
         { transaction }
       );
 
-      // Send email notification if needed
+      // Send email notification if needed. This is fire-and-forget on purpose:
+      // the email provider call has no timeout, and awaiting it here would hang
+      // the entire login request (and hold the transaction open) whenever the
+      // provider is slow. The session row is already committed by the time this
+      // runs, so it updates itself outside the login transaction.
       if (loginAnalysis.shouldSendEmail) {
-        await this.sendLoginNotification(user, loginSession, loginAnalysis, transaction);
+        this.sendLoginNotification(user, loginSession, loginAnalysis).catch((error) => {
+          console.error('Failed to send login notification email:', error);
+        });
       }
     } catch (error) {
       // Log error but don't fail login
@@ -789,8 +795,7 @@ export class AuthService {
       loginType: 'normal' | 'suspicious' | 'new_device';
       isSuspicious: boolean;
       isNewDevice: boolean;
-    },
-    transaction: Transaction
+    }
   ): Promise<void> {
     try {
       const loginNotificationEmail = new LoginNotificationEmail({
@@ -807,8 +812,9 @@ export class AuthService {
 
       await emailService.sendTemplate(user.email, loginNotificationEmail);
 
-      // Mark email as sent
-      await loginSession.update({ emailSent: true }, { transaction });
+      // No transaction here on purpose - this runs after login already committed,
+      // so it must update the row on its own rather than joining a finished transaction.
+      await loginSession.update({ emailSent: true });
     } catch (error) {
       console.error('Failed to send login notification email:', error);
     }

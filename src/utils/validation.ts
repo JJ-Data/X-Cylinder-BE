@@ -152,6 +152,7 @@ export const cylinderValidation = {
     currentOutletId: commonSchemas.id.optional(),
     lastInspectionDate: Joi.date().optional(),
     currentGasVolume: Joi.number().min(0).optional(),
+    maxGasVolume: Joi.number().positive().optional(),
   }),
 
   bulkCreate: Joi.object({
