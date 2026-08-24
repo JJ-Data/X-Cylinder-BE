@@ -46,6 +46,27 @@ router.get(
   customerController.getCustomersByOutlet
 );
 
+// Get own customer profile (Customer only) - self-service, no need to know own User.id
+router.get(
+  '/me',
+  authorize(CONSTANTS.USER_ROLES.CUSTOMER),
+  customerController.getCustomerById
+);
+
+// Get own dashboard (Customer only)
+router.get(
+  '/me/dashboard',
+  authorize(CONSTANTS.USER_ROLES.CUSTOMER),
+  customerController.getCustomerDashboard
+);
+
+// Get own history (Customer only)
+router.get(
+  '/me/history',
+  authorize(CONSTANTS.USER_ROLES.CUSTOMER),
+  customerController.getCustomerHistory
+);
+
 // Get customer by ID (Customer can see own, Staff/Admin can see any)
 router.get(
   '/:id',
