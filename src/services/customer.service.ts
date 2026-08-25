@@ -344,7 +344,7 @@ export class CustomerService {
     const leaseRecords = await LeaseRecord.findAll({
       where: { customerId: id },
       include: [
-        { model: Cylinder, as: 'cylinder', attributes: ['id', 'serialNumber', 'capacity'] },
+        { model: Cylinder, as: 'cylinder', attributes: ['id', 'cylinderCode', 'type'] },
         { model: User, as: 'staff', attributes: ['id', 'email', 'firstName', 'lastName'] },
         { model: Outlet, as: 'outlet', attributes: ['id', 'name', 'location'] },
       ],
@@ -359,8 +359,8 @@ export class CustomerService {
       ? await SwapRecord.findAll({
           where: { leaseId: { [Op.in]: leaseIds } },
           include: [
-            { model: Cylinder, as: 'oldCylinder', attributes: ['id', 'serialNumber'] },
-            { model: Cylinder, as: 'newCylinder', attributes: ['id', 'serialNumber'] },
+            { model: Cylinder, as: 'oldCylinder', attributes: ['id', 'cylinderCode'] },
+            { model: Cylinder, as: 'newCylinder', attributes: ['id', 'cylinderCode'] },
             { model: User, as: 'staff', attributes: ['id', 'email', 'firstName', 'lastName'] },
           ],
           order: [['swapDate', 'DESC']],
@@ -411,14 +411,14 @@ export class CustomerService {
       LeaseRecord.findAll({
         where: { customerId: id, leaseStatus: { [Op.in]: ['active', 'overdue'] } },
         include: [
-          { model: Cylinder, as: 'cylinder', attributes: ['id', 'serialNumber', 'capacity'] },
+          { model: Cylinder, as: 'cylinder', attributes: ['id', 'cylinderCode', 'type'] },
           { model: Outlet, as: 'outlet', attributes: ['id', 'name', 'location'] },
         ],
         order: [['expectedReturnDate', 'ASC']],
       }),
       LeaseRecord.findAll({
         where: { customerId: id },
-        include: [{ model: Cylinder, as: 'cylinder', attributes: ['id', 'serialNumber'] }],
+        include: [{ model: Cylinder, as: 'cylinder', attributes: ['id', 'cylinderCode'] }],
         order: [['updatedAt', 'DESC']],
         limit: 5,
       }),
