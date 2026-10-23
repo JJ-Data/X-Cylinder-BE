@@ -2,7 +2,8 @@ import { Op } from 'sequelize';
 // import { BusinessSetting } from '@models/BusinessSetting.model';
 import { SettingCategory } from '@models/SettingCategory.model';
 import { PricingRule, RuleType } from '@models/PricingRule.model';
-import { SettingsAudit, AuditAction } from '@models/SettingsAudit.model';
+// import { SettingsAudit, AuditAction } from '@models/SettingsAudit.model';
+import { AuditAction } from '@models/SettingsAudit.model';
 import {
   BusinessSettingAttributes,
   BusinessSettingCreationAttributes,
@@ -10,11 +11,7 @@ import {
   SettingsScope,
   SETTING_KEYS,
 } from '@app-types/settings.types';
-import {
-  DataType,
-  OperationType,
-  BusinessSetting,
-} from '@models/BusinessSetting.model';
+import { DataType, OperationType, BusinessSetting } from '@models/BusinessSetting.model';
 
 export class SettingsService {
   /**
@@ -26,9 +23,7 @@ export class SettingsService {
       where: {
         settingKey: key,
       },
-      order: [
-        ['createdAt', 'ASC'],
-      ],
+      order: [['createdAt', 'ASC']],
     });
 
     // Filter settings that match the scope and find the most specific one
@@ -75,9 +70,7 @@ export class SettingsService {
 
     const settings = await BusinessSetting.scope('active').findAll({
       where: { categoryId: category.id },
-      order: [
-        ['settingKey', 'ASC'],
-      ],
+      order: [['settingKey', 'ASC']],
     });
 
     const results: Record<string, any> = {};
@@ -465,37 +458,36 @@ export class SettingsService {
     }
 
     // Get settings by scope
-    const [globalSettings, outletSettings, cylinderTypeSettings] =
-      await Promise.all([
-        BusinessSetting.count({
-          where: {
-            ...baseWhere,
-            isActive: true,
-            outletId: null,
-            // customerTier: null, // Removed during simplification
-            cylinderType: null,
-            operationType: null,
-          },
-        }),
-        BusinessSetting.count({
-          where: {
-            ...baseWhere,
-            isActive: true,
-            outletId: { [Op.not]: null },
-            // customerTier: null, // Removed during simplification
-            cylinderType: null,
-            operationType: null,
-          },
-        }),
-        // Removed customerTier query during simplification
-        BusinessSetting.count({
-          where: {
-            ...baseWhere,
-            isActive: true,
-            cylinderType: { [Op.not]: null },
-          },
-        }),
-      ]);
+    const [globalSettings, outletSettings, cylinderTypeSettings] = await Promise.all([
+      BusinessSetting.count({
+        where: {
+          ...baseWhere,
+          isActive: true,
+          outletId: null,
+          // customerTier: null, // Removed during simplification
+          cylinderType: null,
+          operationType: null,
+        },
+      }),
+      BusinessSetting.count({
+        where: {
+          ...baseWhere,
+          isActive: true,
+          outletId: { [Op.not]: null },
+          // customerTier: null, // Removed during simplification
+          cylinderType: null,
+          operationType: null,
+        },
+      }),
+      // Removed customerTier query during simplification
+      BusinessSetting.count({
+        where: {
+          ...baseWhere,
+          isActive: true,
+          cylinderType: { [Op.not]: null },
+        },
+      }),
+    ]);
 
     // Complex scope = settings with multiple scope criteria
     const complexSettings = await BusinessSetting.count({
@@ -605,9 +597,7 @@ export class SettingsService {
       include,
       offset,
       limit,
-      order: [
-        ['settingKey', 'ASC'],
-      ],
+      order: [['settingKey', 'ASC']],
     });
 
     return {
@@ -813,7 +803,11 @@ export class SettingsService {
     ipAddress?: string;
     userAgent?: string;
   }): Promise<void> {
-    await SettingsAudit.create(data);
+    // await SettingsAudit.create(data);
+    console.info(
+      '[settings-audit]',
+      JSON.stringify({ ...data, timestamp: new Date().toISOString() })
+    );
   }
 }
 
