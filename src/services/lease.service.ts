@@ -17,7 +17,7 @@ export class LeaseService {
   async createLease(
     data: CreateLeaseDto,
     staffId: number,
-    outletId: number,
+    userOutletId: number | null, // null = admin (not tied to an outlet)
     transaction?: Transaction
   ): Promise<LeaseRecordPublicData> {
     const t = transaction || (await sequelize.transaction());
@@ -68,7 +68,10 @@ export class LeaseService {
         );
       }
 
-      if (cylinder.getDataValue('currentOutletId') !== outletId) {
+      // Admins (userOutletId === null) can lease from any outlet, so use the cylinder's own outlet
+      const cylinderOutletId = cylinder.getDataValue('currentOutletId');
+      const outletId = userOutletId === null ? cylinderOutletId : userOutletId;
+      if (cylinderOutletId !== outletId) {
         throw new AppError('Cylinder is not at this outlet', CONSTANTS.HTTP_STATUS.BAD_REQUEST);
       }
 

@@ -25,7 +25,7 @@ export class LeaseController {
 
   createLease = asyncHandler(async (req: AuthRequest, res: Response) => {
     const staffId = req.user!.id;
-    const outletId = req.user!.outletId!;
+    const outletId = req.user!.role === CONSTANTS.USER_ROLES.ADMIN ? null : req.user!.outletId!;
     
     const lease = await leaseService.createLease(req.body, staffId, outletId);
     
