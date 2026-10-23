@@ -14,7 +14,8 @@ export class RefillService {
   async createRefill(
     data: CreateRefillDto,
     operatorId: number,
-    outletId: number,
+    // outletId: number,
+    userOutletId: number | null, // null = admin (not tied to an outlet)
     transaction?: Transaction
   ): Promise<RefillRecordPublicData> {
     const t = transaction || (await sequelize.transaction());
@@ -27,9 +28,16 @@ export class RefillService {
       }
 
       // Verify cylinder is at the operator's outlet
-      if (cylinder.getDataValue('currentOutletId') !== outletId) {
+      // Verify cylinder is at the operator's outlet (admins can refill at any outlet)
+      const cylinderOutletId = cylinder.getDataValue('currentOutletId');
+      const outletId = userOutletId === null ? cylinderOutletId : userOutletId;
+      if (cylinderOutletId !== outletId) {
         throw new AppError('Cylinder is not at this outlet', CONSTANTS.HTTP_STATUS.BAD_REQUEST);
       }
+
+      // if (cylinder.getDataValue('currentOutletId') !== outletId) {
+      //   throw new AppError('Cylinder is not at this outlet', CONSTANTS.HTTP_STATUS.BAD_REQUEST);
+      // }
 
       // Note: Leased cylinders CAN be refilled - customers can refill their leased cylinders anytime
 
@@ -65,7 +73,7 @@ export class RefillService {
       let refillCost = data.refillCost;
       if (!refillCost) {
         const cylinderType = cylinder.getDataValue('type') as string;
-        
+
         const refillPricing = await simplifiedPricingService.calculatePrice({
           operationType: OperationType.REFILL,
           cylinderType,
@@ -87,7 +95,9 @@ export class RefillService {
           refillCost,
           paymentMethod: data.paymentMethod || 'cash',
           paymentReference: data.paymentReference,
-          notes: data.notes ? `${data.notes}\nVolume Added: ${volumeAdded}kg` : `Volume Added: ${volumeAdded}kg`,
+          notes: data.notes
+            ? `${data.notes}\nVolume Added: ${volumeAdded}kg`
+            : `Volume Added: ${volumeAdded}kg`,
           batchNumber: data.batchNumber,
         },
         { transaction: t }
@@ -135,7 +145,8 @@ export class RefillService {
   async bulkRefill(
     data: BulkRefillDto,
     operatorId: number,
-    outletId: number
+    // outletId: number
+    userOutletId: number | null
   ): Promise<{
     successful: number;
     failed: Array<{ cylinderCode: string; error: string }>;
@@ -187,7 +198,7 @@ export class RefillService {
             notes: data.notes,
           },
           operatorId,
-          outletId,
+          userOutletId,
           transaction
         );
 
@@ -550,17 +561,13 @@ export class RefillService {
       batchNumber: refillRecord.batchNumber || undefined,
       notes: refillRecord.notes || undefined,
       companyName: process.env.COMPANY_NAME || 'CylinderX',
-      supportEmail: process.env.SUPPORT_EMAIL || 'support@cylinderx.com'
+      supportEmail: process.env.SUPPORT_EMAIL || 'support@cylinderx.com',
     };
 
     const emailTemplate = new RefillReceiptEmail(emailData);
     const emailService = new EmailService();
-    
-    await emailService.sendEmail(
-      emailData.to,
-      emailTemplate.getSubject(),
-      emailTemplate.getHtml()
-    );
+
+    await emailService.sendEmail(emailData.to, emailTemplate.getSubject(), emailTemplate.getHtml());
 
     logger.info(`Refill receipt email sent to ${operator.email} for refill ID: ${refillRecord.id}`);
   }
