@@ -10,7 +10,6 @@ import { OperationType } from '@models/BusinessSetting.model';
 export class RefillController {
   createRefill = asyncHandler(async (req: AuthRequest, res: Response) => {
     const operatorId = req.user!.id;
-    // const outletId = req.user!.outletId!;
     const outletId = req.user!.role === CONSTANTS.USER_ROLES.ADMIN ? null : req.user!.outletId!;
 
     const refill = await refillService.createRefill(req.body, operatorId, outletId);
@@ -25,7 +24,7 @@ export class RefillController {
 
   bulkRefill = asyncHandler(async (req: AuthRequest, res: Response) => {
     const operatorId = req.user!.id;
-    const outletId = req.user!.outletId!;
+    const outletId = req.user!.role === CONSTANTS.USER_ROLES.ADMIN ? null : req.user!.outletId!;
 
     const result = await refillService.bulkRefill(req.body, operatorId, outletId);
 
